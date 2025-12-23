@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="layout-container">
+    <div class="d-flex justify-between align-center mb-4" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1>
+                {% if view_type == 'me' %}
+                My Transactions
+                {% else %}
+                {{ partner.username }}'s Activity
+                {% endif %}
+            </h1>
+            <p class="text-muted mt-1">
+                {% if view_type == 'me' %}
+                Your personal financial history.
+                {% else %}
+                Viewing shared details from your partner.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="actions">
+            {% if view_type == 'me' %}
+            {% if has_partner %}
+            <a href="{% url 'partner_transactions' %}" class="btn btn-outline">
+                View Partner's Activity →
+            </a>
+            {% endif %}
+            {% else %}
+            <a href="{% url 'transactions' %}" class="btn btn-outline">
+                ← Back to My Transactions
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if view_type == 'partner' and accounts %}
+    <div class="mb-4">
+        <h3 class="mb-4">{{ partner.username }}'s Accounts</h3>
+        <div class="accounts-carousel">
+            {% for account in accounts %}
+            <div class="account-card-item">
+                <span class="badge badge-primary mb-4 p-2">{{ account.get_account_type_display }}</span>
+                <div class="d-flex justify-between align-center mt-2">
+                    <span class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 600;">{{
+                        account.name }}</span>
+                </div>
+                <div class="stat-value" style="font-size: 1.5rem;">₹{{ account.balance }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Account</th>
+                    <th>Amount</th>
+                    {% if view_type == 'me' %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>{{ t.date|date:"M d, Y" }}</td>
+                    <td>
+                        <span style="font-weight: 500;">{{ t.description }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if t.type == 'income' %}badge-success{% else %}badge-neutral{% endif %}">
+                            {{ t.category|default:"-" }}
+                        </span>
+                    </td>
+                    <td>{{ t.account.name|default:"-" }}</td>
+                    <td
+                        class="font-weight-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                        {% if t.type == 'income' %}+{% else %}-{% endif %}₹{{ t.amount }}
+                    </td>
+                    {% if view_type == 'me' %}
+                    <td>
+                        <div class="d-flex gap-2">
+                            {% if t.type == 'expense' %}
+                            <a href="{% url 'edit_expense' t.id %}" class="btn btn-outline"
+                                style="padding: 0.25rem 0.5rem; font-size: 1rem;" title="Edit">✏️</a>
+                            <a href="{% url 'delete_expense' t.id %}" class="btn btn-outline"
+                                style="padding: 0.25rem 0.5rem; font-size: 1rem; border-color: var(--danger-100); color: var(--danger-600);"
+                                title="Delete">🗑️</a>
+                            {% else %}
+                            <a href="{% url 'edit_income' t.id %}" class="btn btn-outline"
+                                style="padding: 0.25rem 0.5rem; font-size: 1rem;" title="Edit">✏️</a>
+                            <a href="{% url 'delete_income' t.id %}" class="btn btn-outline"
+                                style="padding: 0.25rem 0.5rem; font-size: 1rem; border-color: var(--danger-100); color: var(--danger-600);"
+                                title="Delete">🗑️</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if view_type == 'me' %}6{% else %}5{% endif %}" class="text-center text-muted"
+                        style="padding: 3rem;">
+                        No transactions found for this period.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

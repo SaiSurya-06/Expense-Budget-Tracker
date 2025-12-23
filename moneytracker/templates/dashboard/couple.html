@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div style="padding: 2rem 0;">
+    <h1 style="margin-bottom: 2rem; font-size: 2rem;">Partnership & Settings</h1>
+
+    {% if partner %}
+    <!-- Connected State -->
+    <div class="card" style="text-align: center; padding: 4rem 2rem; max-width: 600px; margin: 0 auto;">
+        <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #FFE4E6, #FFC9D3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+            <span style="font-size: 3.5rem; display: block;">❤️</span>
+        </div>
+        <h2 style="margin-bottom: 0.75rem; font-size: 1.75rem;">You're linked with {{ partner.username }}</h2>
+        <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto 2rem; font-size: 1rem; line-height: 1.6;">
+            Your accounts are synced and both of you can view each other's expenses and income in the shared dashboard.
+        </p>
+        <button class="btn" style="background: var(--text-muted); opacity: 0.5; cursor: not-allowed; pointer-events: none;" title="Feature coming soon">
+            Unlink Accounts (Coming Soon)
+        </button>
+    </div>
+
+    {% else %}
+    <!-- Invite State -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;">
+        <div class="left">
+            <h2 style="font-size: 2.25rem; line-height: 1.2; margin-bottom: 1.5rem; font-weight: 700;">Manage money,<br>better together.</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2.5rem; line-height: 1.7;">
+                Money Manager is designed for couples. Link your accounts to get a unified view of your net worth,
+                track shared expenses, and hit your goals faster.
+            </p>
+            <ul style="list-style: none; padding: 0; color: var(--text-primary); font-weight: 500;">
+                <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="color: var(--success-600); font-size: 1.25rem;">✓</span>
+                    See shared net worth
+                </li>
+                <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="color: var(--success-600); font-size: 1.25rem;">✓</span>
+                    Track household spending
+                </li>
+                <li style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="color: var(--warning-500); font-size: 1.25rem;">✨</span>
+                    Keep personal accounts private (Coming Soon)
+                </li>
+            </ul>
+        </div>
+
+        <div class="right">
+            <div class="card" style="text-align: center;">
+                <div style="margin-bottom: 2rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.8;">💕</div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Link Your Partner</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">
+                        Start managing finances together
+                    </p>
+                </div>
+                <a href="{% url 'invite_partner' %}" class="btn btn-primary btn-block" style="padding: 1rem;">
+                    Link Account →
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Responsive Styles -->
+<style>
+    @media (max-width: 1024px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+
+        h2[style*="font-size: 2.25rem"] {
+            font-size: 1.75rem !important;
+        }
+    }
+</style>
+{% endblock %}

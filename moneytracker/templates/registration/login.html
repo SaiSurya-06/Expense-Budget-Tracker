@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.login-container {
+    min-height: 80vh;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid #E5E7EB;
+    text-align: center;
+}
+
+.login-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+    color: #2563EB;
+}
+
+.login-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.login-subtitle {
+    font-size: 0.95rem;
+    color: #6B7280;
+    margin: 0.5rem 0 0 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1F2937;
+    background: white;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.form-error {
+    font-size: 0.875rem;
+    color: #DC2626;
+    margin-top: 0.375rem;
+    display: block;
+}
+
+.non-field-errors {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #FEF2F2;
+    border-radius: 12px;
+    border-left: 4px solid #DC2626;
+    color: #DC2626;
+    font-weight: 500;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.875rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+}
+
+.btn-primary {
+    background: #2563EB;
+    color: white;
+    border-color: #2563EB;
+}
+
+.btn-primary:hover {
+    background: #1E40AF;
+    border-color: #1E40AF;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+.divider {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #E5E7EB;
+}
+
+.signup-text {
+    font-size: 0.95rem;
+    color: #6B7280;
+    margin-bottom: 0.5rem;
+}
+
+.signup-link {
+    color: #2563EB;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.signup-link:hover {
+    color: #1E40AF;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 1rem;
+        min-height: 100vh;
+    }
+
+    .login-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+
+    .login-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.5rem;
+    }
+
+    .login-title {
+        font-size: 1.25rem;
+    }
+
+    .login-subtitle,
+    .signup-text {
+        font-size: 0.875rem;
+    }
+}
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="text-center">
+            <div class="login-icon">💰</div>
+            <h2 class="login-title">Welcome Back</h2>
+            <p class="login-subtitle">Sign in to your Money Manager account</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username" class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div class="form-error">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password" class="form-label">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <div class="form-error">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="non-field-errors">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary btn-block">
+                Sign In
+            </button>
+        </form>
+
+        <div class="divider">
+            <p class="signup-text">
+                Don't have an account?
+            </p>
+            <a href="{% url 'register' %}" class="signup-link">
+                Create a free account
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

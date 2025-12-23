@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex align-center justify-center" style="min-height: 80vh; padding: 2rem;">
+    <div class="card" style="width: 100%; max-width: 520px;">
+        <div class="text-center mb-4" style="margin-bottom: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.8;">💕</div>
+            <h2 class="card-title" style="font-size: 1.75rem;">Connect with Partner</h2>
+        </div>
+
+        <p class="text-muted" style="text-align: center; margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">
+            Enter your partner's username to verify and link your accounts.
+            Once linked, you will see a combined view of your finances.
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Partner's Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div class="text-danger mt-1" style="font-size: 0.875rem;">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="text-danger" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--danger-100); border-radius: var(--radius-md); border-left: 4px solid var(--danger-600);">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary btn-block mt-4" style="padding: 0.875rem;">
+                Link Accounts
+            </button>
+        </form>
+
+        <div style="background: linear-gradient(135deg, var(--primary-100), rgba(37, 99, 235, 0.05)); border-radius: var(--radius-md); border: 1px solid rgba(37, 99, 235, 0.1); padding: 1.5rem; margin-top: 2rem;">
+            <h4 style="color: var(--primary-600); font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;">How it works:</h4>
+            <ul class="text-muted" style="padding-left: 1.5rem; margin: 0; font-size: 0.9rem;">
+                <li style="margin-bottom: 0.5rem;">Ask your partner to register first.</li>
+                <li style="margin-bottom: 0.5rem;">Enter their exact username above.</li>
+                <li>Dashboards will update instantly for both of you.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
