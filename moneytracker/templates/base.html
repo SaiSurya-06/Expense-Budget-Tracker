@@ -77,6 +77,7 @@
 
         /* Responsive Navigation - Mobile Only */
         @media (max-width: 768px) {
+
             /* Show mobile menu toggle ONLY on mobile */
             .mobile-menu-toggle {
                 display: flex;
@@ -216,6 +217,7 @@
 
         /* Desktop Styles - Only show these on larger screens */
         @media (min-width: 769px) {
+
             /* Hide mobile toggle and overlay on desktop */
             .mobile-menu-toggle,
             .mobile-menu-overlay {
@@ -420,7 +422,9 @@
             <div class="nav-links" role="menubar">
                 <a href="/dashboard/" class="nav-link" role="menuitem">Dashboard</a>
                 <a href="{% url 'transactions' %}" class="nav-link" role="menuitem">Transactions</a>
+                <a href="{% url 'manage_accounts' %}" class="nav-link" role="menuitem">Accounts</a>
                 <a href="{% url 'couple_view' %}" class="nav-link" role="menuitem">Couple</a>
+
                 <form action="{% url 'logout' %}" method="post" class="logout-form">
                     {% csrf_token %}
                     <button type="submit" class="logout-btn" aria-label="Logout from account">Logout</button>
@@ -463,30 +467,30 @@
         });
 
         // Mobile Menu Functionality
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
             const navLinks = document.querySelector('.nav-links');
             const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
-            
+
             if (mobileMenuToggle && navLinks && mobileMenuOverlay) {
                 // Only add mobile functionality if we're on mobile
                 function isMobileView() {
                     return window.innerWidth <= 768;
                 }
-                
+
                 // Toggle mobile menu
                 function toggleMobileMenu() {
                     if (!isMobileView()) return;
-                    
+
                     const isExpanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
-                    
+
                     if (isExpanded) {
                         closeMobileMenu();
                     } else {
                         openMobileMenu();
                     }
                 }
-                
+
                 function openMobileMenu() {
                     mobileMenuToggle.classList.add('active');
                     mobileMenuToggle.setAttribute('aria-expanded', 'true');
@@ -496,7 +500,7 @@
                     // Add focus trap
                     document.addEventListener('keydown', trapFocus);
                 }
-                
+
                 function closeMobileMenu() {
                     mobileMenuToggle.classList.remove('active');
                     mobileMenuToggle.setAttribute('aria-expanded', 'false');
@@ -508,7 +512,7 @@
                     // Focus back to toggle button
                     mobileMenuToggle.focus();
                 }
-                
+
                 // Focus trap for accessibility
                 function trapFocus(e) {
                     if (e.key === 'Tab') {
@@ -517,7 +521,7 @@
                         );
                         const firstElement = focusableElements[0];
                         const lastElement = focusableElements[focusableElements.length - 1];
-                        
+
                         if (e.shiftKey) {
                             // Shift + Tab
                             if (document.activeElement === firstElement) {
@@ -533,12 +537,12 @@
                         }
                     }
                 }
-                
+
                 // Event Listeners - only add if mobile view
                 if (isMobileView()) {
                     mobileMenuToggle.addEventListener('click', toggleMobileMenu);
                     mobileMenuOverlay.addEventListener('click', closeMobileMenu);
-                    
+
                     // Close menu when clicking on links
                     navLinks.querySelectorAll('a, .logout-btn').forEach(element => {
                         element.addEventListener('click', (e) => {
@@ -550,20 +554,20 @@
                             closeMobileMenu();
                         });
                     });
-                    
+
                     // Close menu on escape key
-                    document.addEventListener('keydown', function(e) {
+                    document.addEventListener('keydown', function (e) {
                         if (e.key === 'Escape' && mobileMenuToggle.classList.contains('active')) {
                             closeMobileMenu();
                         }
                     });
                 }
-                
+
                 // Handle window resize
                 let resizeTimer;
-                window.addEventListener('resize', function() {
+                window.addEventListener('resize', function () {
                     clearTimeout(resizeTimer);
-                    resizeTimer = setTimeout(function() {
+                    resizeTimer = setTimeout(function () {
                         // Close menu if resizing from mobile to desktop
                         if (window.innerWidth > 768 && mobileMenuToggle.classList.contains('active')) {
                             closeMobileMenu();
@@ -573,6 +577,8 @@
             }
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
+
 
 </html>

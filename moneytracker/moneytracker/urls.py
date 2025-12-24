@@ -6,8 +6,10 @@ from django.urls import path, include
 from dashboard.views import dashboard_view
 from expenses.views import (
     add_expense, add_income, add_account, add_category,
-    edit_expense, delete_expense, edit_income, delete_income
+    edit_expense, delete_expense, edit_income, delete_income,
+    manage_accounts, edit_account, delete_account, api_create_category
 )
+
 from expenses.views_transactions import transactions_view, partner_transactions_view
 from accounts.views_couple import couple_view
 from accounts.views import register, invite_partner
@@ -28,6 +30,11 @@ urlpatterns = [
     path('income/add/', add_income, name='add_income'),
     path('income/edit/<int:pk>/', edit_income, name='edit_income'),
     path('income/delete/<int:pk>/', delete_income, name='delete_income'),
+    path('accounts/list/', manage_accounts, name='manage_accounts'),
     path('accounts/add/', add_account, name='add_account'),
+    path('accounts/edit/<int:pk>/', edit_account, name='edit_account'),
+    path('accounts/delete/<int:pk>/', delete_account, name='delete_account'),
+    path('api/category/create/', api_create_category, name='api_create_category'),
+
     path('', dashboard_view, name='home'),
 ]

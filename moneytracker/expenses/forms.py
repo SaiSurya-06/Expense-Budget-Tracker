@@ -5,7 +5,9 @@ class ExpenseForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['account'].queryset = BankAccount.objects.filter(user=user)
-        self.fields['category'].queryset = Category.objects.filter(user=user)
+        self.fields['account'].queryset = BankAccount.objects.filter(user=user)
+        self.fields['category'].queryset = Category.objects.filter(user=user, type='expense')
+
 
     class Meta:
         model = Expense
@@ -22,14 +24,18 @@ class IncomeForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['account'].queryset = BankAccount.objects.filter(user=user)
+        self.fields['category'].queryset = Category.objects.filter(user=user, type='income')
 
     class Meta:
         model = Income
-        fields = ['amount', 'source', 'date', 'account']
+        fields = ['amount', 'category', 'source', 'date', 'account']
+
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
             'amount': forms.NumberInput(attrs={'placeholder': '0.00', 'class': 'form-input'}),
-            'source': forms.TextInput(attrs={'placeholder': 'Salary, Bonus, etc.', 'class': 'form-input'}),
+            'category': forms.Select(attrs={'class': 'form-input'}),
+            'source': forms.TextInput(attrs={'placeholder': 'Description (optional)', 'class': 'form-input'}),
+
             'account': forms.Select(attrs={'class': 'form-input'}),
         }
 
@@ -46,7 +52,9 @@ class BankAccountForm(forms.ModelForm):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name']
+        fields = ['name', 'type']
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'e.g. Groceries', 'class': 'form-input', 'required': True}),
+            'type': forms.HiddenInput(),
         }
+

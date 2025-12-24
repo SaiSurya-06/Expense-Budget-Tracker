@@ -25,11 +25,12 @@ def get_transactions_for_user(user):
             'date': i.date,
             'amount': i.amount,
             
-            'category': i.source,
-            'description': 'Income',
+            'category': i.category or i.source,
+            'description': i.source if i.category else 'Income',
             'user': i.user,
             'account': i.account
         })
+
     
     transactions.sort(key=lambda x: x['date'], reverse=True)
     return transactions

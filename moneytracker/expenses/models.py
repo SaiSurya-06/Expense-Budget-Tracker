@@ -13,9 +13,13 @@ ACCOUNT_TYPES = [
 ]
 
 class Category(models.Model):
+    CATEGORY_TYPES = [
+        ('expense', 'Expense'),
+        ('income', 'Income'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    # Icon or color could be added later for UI customization
+    type = models.CharField(max_length=10, choices=CATEGORY_TYPES, default='expense')
     
     class Meta:
         verbose_name_plural = "Categories"
@@ -37,11 +41,13 @@ class Income(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     account = models.ForeignKey(BankAccount, on_delete=models.SET_NULL, null=True, blank=True, related_name='incomes')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    source = models.CharField(max_length=100)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    source = models.CharField(max_length=100, blank=True) # Making source optional as category can replace it
     date = models.DateField()
 
     def __str__(self):
-        return f"{self.user.username} - {self.amount} ({self.source})"
+        return f"{self.user.username} - {self.amount}"
+
 
 class Expense(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

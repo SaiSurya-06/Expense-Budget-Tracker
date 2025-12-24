@@ -24,7 +24,12 @@
 
         <div class="actions" style="display: flex; gap: 1rem;">
             {% if view_type == 'me' %}
+            <a href="{% url 'add_expense' %}?next=transactions" class="btn btn-primary"
+                style="background: #DC2626; border-color: #DC2626;">− Expense</a>
+            <a href="{% url 'add_income' %}?next=transactions" class="btn btn-primary"
+                style="background: #16A34A; border-color: #16A34A;">+ Income</a>
             {% if has_partner %}
+
             <a href="{% url 'partner_transactions' %}" class="btn btn-outline">
                 View Partner's Activity →
             </a>
@@ -46,7 +51,9 @@
             <div class="account-card-item" style="min-width: 250px;">
                 <span class="badge badge-primary mb-4">{{ account.get_account_type_display|upper }}</span>
                 <div class="d-flex justify-between align-center mt-2" style="margin-top: 1rem;">
-                    <span class="text-muted" style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">{{ account.name }}</span>
+                    <span class="text-muted"
+                        style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">{{
+                        account.name }}</span>
                 </div>
                 <div class="stat-value" style="font-size: 1.5rem;">₹{{ account.balance }}</div>
             </div>
@@ -85,18 +92,27 @@
                     <td>
                         <span style="color: var(--text-secondary);">{{ t.account.name|default:"—" }}</span>
                     </td>
-                    <td style="text-align: right; font-weight: 700; {% if t.type == 'income' %}color: var(--success-600);{% else %}color: var(--danger-600);{% endif %}">
+                    <td
+                        style="text-align: right; font-weight: 700; {% if t.type == 'income' %}color: var(--success-600);{% else %}color: var(--danger-600);{% endif %}">
                         {% if t.type == 'income' %}+{% else %}−{% endif %}₹{{ t.amount }}
                     </td>
                     {% if view_type == 'me' %}
                     <td style="text-align: center;">
                         <div class="d-flex gap-2" style="justify-content: center;">
                             {% if t.type == 'expense' %}
-                            <a href="{% url 'edit_expense' t.id %}" class="btn btn-outline" style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;" title="Edit transaction">✏️ Edit</a>
-                            <a href="{% url 'delete_expense' t.id %}" class="btn btn-outline" style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;" title="Delete transaction">🗑️ Delete</a>
+                            <a href="{% url 'edit_expense' t.id %}" class="btn btn-outline"
+                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;"
+                                title="Edit transaction">✏️ Edit</a>
+                            <a href="{% url 'delete_expense' t.id %}" class="btn btn-outline"
+                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;"
+                                title="Delete transaction">🗑️ Delete</a>
                             {% else %}
-                            <a href="{% url 'edit_income' t.id %}" class="btn btn-outline" style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;" title="Edit transaction">✏️ Edit</a>
-                            <a href="{% url 'delete_income' t.id %}" class="btn btn-outline" style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;" title="Delete transaction">🗑️ Delete</a>
+                            <a href="{% url 'edit_income' t.id %}" class="btn btn-outline"
+                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;"
+                                title="Edit transaction">✏️ Edit</a>
+                            <a href="{% url 'delete_income' t.id %}" class="btn btn-outline"
+                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;"
+                                title="Delete transaction">🗑️ Delete</a>
                             {% endif %}
                         </div>
                     </td>
@@ -104,7 +120,8 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="{% if view_type == 'me' %}6{% else %}5{% endif %}" class="text-center" style="padding: 3rem; color: var(--text-muted);">
+                    <td colspan="{% if view_type == 'me' %}6{% else %}5{% endif %}" class="text-center"
+                        style="padding: 3rem; color: var(--text-muted);">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
                             <div style="font-size: 2.5rem; opacity: 0.3;">📭</div>
                             <p style="margin: 0;">No transactions found</p>

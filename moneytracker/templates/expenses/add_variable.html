@@ -3,232 +3,426 @@
 
 {% block content %}
 <style>
-.main-content {
-    padding: 0;
-}
-.form-container {
-    min-height: 80vh;
-    padding: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
-}
+    .main-content {
+        padding: 0;
+    }
 
-.form-card {
-    width: 100%;
-    max-width: 520px;
-    background: white;
-    border-radius: 20px;
-    padding: 2.5rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    border: 1px solid #E5E7EB;
-}
-
-.form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #E5E7EB;
-}
-
-.form-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0;
-}
-
-.close-btn {
-    font-size: 1.75rem;
-    line-height: 1;
-    cursor: pointer;
-    color: #6B7280;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: #F8FAFC;
-}
-
-.close-btn:hover {
-    color: #DC2626;
-    background: #FEF2F2;
-    transform: scale(1.05);
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1F2937;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-}
-
-.form-input {
-    width: 100%;
-    padding: 0.875rem 1.25rem;
-    border: 2px solid #E5E7EB;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 500;
-    color: #1F2937;
-    background: white;
-    transition: all 0.2s ease;
-    outline: none;
-}
-
-.form-input:focus {
-    border-color: #2563EB;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    outline: none;
-}
-
-.form-input::placeholder {
-    color: #9CA3AF;
-}
-
-.form-help {
-    font-size: 0.85rem;
-    color: #6B7280;
-    margin-top: 0.375rem;
-    display: block;
-}
-
-.form-error {
-    font-size: 0.875rem;
-    color: #DC2626;
-    margin-top: 0.375rem;
-    display: block;
-}
-
-.non-field-errors {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #FEF2F2;
-    border-radius: 12px;
-    border-left: 4px solid #DC2626;
-    color: #DC2626;
-    font-weight: 500;
-}
-
-.btn {
-    display: inline-block;
-    padding: 0.875rem 1.5rem;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    cursor: pointer;
-    text-align: center;
-    width: 100%;
-}
-
-.btn-primary {
-    background: #2563EB;
-    color: white;
-    border-color: #2563EB;
-}
-
-.btn-primary:hover {
-    background: #1E40AF;
-    border-color: #1E40AF;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
-}
-
-.btn-block {
-    display: block;
-    width: 100%;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
     .form-container {
-        padding: 1rem;
-        min-height: 100vh;
+        min-height: 80vh;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
     }
 
     .form-card {
-        padding: 2rem 1.5rem;
-        margin: 1rem;
+        width: 100%;
+        max-width: 520px;
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
     }
 
     .form-header {
-        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #E5E7EB;
     }
 
     .form-title {
-        font-size: 1.25rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .form-card {
-        padding: 1.5rem;
-    }
-
-    .form-title {
-        font-size: 1.125rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin: 0;
     }
 
     .close-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+        line-height: 1;
+        cursor: pointer;
+        color: #6B7280;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #F8FAFC;
     }
-}
+
+    .close-btn:hover {
+        color: #DC2626;
+        background: #FEF2F2;
+        transform: scale(1.05);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1.25rem;
+        border: 2px solid #E5E7EB;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #1F2937;
+        background: white;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .form-input:focus {
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .form-input::placeholder {
+        color: #9CA3AF;
+    }
+
+    .form-help {
+        font-size: 0.85rem;
+        color: #6B7280;
+        margin-top: 0.375rem;
+        display: block;
+    }
+
+    .form-error {
+        font-size: 0.875rem;
+        color: #DC2626;
+        margin-top: 0.375rem;
+        display: block;
+    }
+
+    .non-field-errors {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #FEF2F2;
+        border-radius: 12px;
+        border-left: 4px solid #DC2626;
+        color: #DC2626;
+        font-weight: 500;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-align: center;
+        width: 100%;
+    }
+
+    .btn-primary {
+        background: #2563EB;
+        color: white;
+        border-color: #2563EB;
+    }
+
+    .btn-primary:hover {
+        background: #1E40AF;
+        border-color: #1E40AF;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-block {
+        display: block;
+        width: 100%;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+            min-height: 100vh;
+        }
+
+        .form-card {
+            padding: 2rem 1.5rem;
+            margin: 1rem;
+        }
+
+        .form-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-title {
+            font-size: 1.25rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .form-title {
+            font-size: 1.125rem;
+        }
+
+        .close-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 1.5rem;
+        }
+    }
 </style>
 <div class="main-content">
-<div class="form-container">
-    <div class="form-card">
-        <div class="form-header">
-            <h2 class="form-title">{{ title }}</h2>
-            <a href="{% url 'dashboard' %}" class="close-btn" title="Close">×</a>
+    <div class="form-container">
+        <div class="form-card">
+            <div class="form-header">
+                <h2 class="form-title">{{ title }}</h2>
+                <a href="{% url 'dashboard' %}" class="close-btn" title="Close">×</a>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small class="form-help">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="form-error">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                {% if form.non_field_errors %}
+                <div class="non-field-errors">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    {{ btn_text }}
+                </button>
+            </form>
         </div>
-
-        <form method="post" novalidate>
-            {% csrf_token %}
-
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}
-                <small class="form-help">{{ field.help_text|safe }}</small>
-                {% endif %}
-                {% if field.errors %}
-                <div class="form-error">{{ field.errors }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-
-            {% if form.non_field_errors %}
-            <div class="non-field-errors">
-                {{ form.non_field_errors }}
-            </div>
-            {% endif %}
-
-            <button type="submit" class="btn btn-primary btn-block">
-                {{ btn_text }}
-            </button>
-        </form>
     </div>
-</div>
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<!-- Modal for inline Category Creation -->
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 400px;
+        transform: translateY(20px);
+        transition: all 0.2s ease;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-overlay.active .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1F2937;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .btn-secondary {
+        background: #F3F4F6;
+        color: #4B5563;
+    }
+
+    .btn-secondary:hover {
+        background: #E5E7EB;
+    }
+
+    .add-cat-btn {
+        background: #EFF6FF;
+        color: #2563EB;
+        border: 1px solid #DBEAFE;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 1.2rem;
+        line-height: 1;
+        font-weight: bold;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .add-cat-btn:hover {
+        background: #2563EB;
+        color: white;
+    }
+</style>
+
+<div id="categoryModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="modal-title">New Category</h3>
+        <div class="form-group">
+            <label class="form-label">Category Name</label>
+            <input type="text" id="newCategoryName" class="form-input" placeholder="e.g. Groceries">
+            <div id="catError" class="form-error" style="display:none"></div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeCatModal()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveCategory()">Create</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const categorySelect = document.getElementById('id_category');
+        if (categorySelect) {
+            // Find the label for this select
+            const label = document.querySelector('label[for="id_category"]');
+            if (label) {
+                const btn = document.createElement('a');
+                btn.href = "#";
+                btn.className = 'add-cat-btn';
+                btn.innerHTML = '+';
+                btn.title = "Create new category";
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    openCatModal();
+                };
+                label.appendChild(btn);
+                label.style.display = "flex";
+                label.style.alignItems = "center";
+            }
+        }
+    });
+
+    function openCatModal() {
+        const modal = document.getElementById('categoryModal');
+        modal.classList.add('active');
+        document.getElementById('newCategoryName').value = '';
+        document.getElementById('catError').style.display = 'none';
+        document.getElementById('newCategoryName').focus();
+    }
+
+    function closeCatModal() {
+        document.getElementById('categoryModal').classList.remove('active');
+    }
+
+    function saveCategory() {
+        const name = document.getElementById('newCategoryName').value;
+        const errorDiv = document.getElementById('catError');
+        // Get the current type from the template context (passed as a JS variable or inferred)
+        // Since we are in add_variable.html, we can use the 'type' variable which is 'expense' or 'income'
+        const type = '{{ type|default:"expense" }}';
+
+        if (!name) {
+            errorDiv.textContent = "Name is required";
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch('{% url "api_create_category" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ name: name, type: type })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add to select
+                    const select = document.getElementById('id_category');
+                    if (select) {
+                        const option = new Option(data.name, data.id);
+                        select.add(option, undefined);
+                        select.value = data.id;
+                    }
+                    closeCatModal();
+                } else {
+                    errorDiv.textContent = data.error || "Error creating category";
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = "Server error";
+                errorDiv.style.display = 'block';
+                console.error(err);
+            });
+    }
+</script>
+{% endblock %}

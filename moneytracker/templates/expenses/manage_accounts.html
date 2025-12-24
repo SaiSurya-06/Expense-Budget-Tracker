@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .main-content {
+        padding: 2rem;
+        padding-top: 30px;
+        padding-bottom: 30px;
+    }
+
+    .accounts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .accounts-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin: 0;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: #2563EB;
+        color: white;
+        border-color: #2563EB;
+    }
+
+    .btn-primary:hover {
+        background: #1E40AF;
+        border-color: #1E40AF;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.25);
+    }
+
+    .accounts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .account-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E5E7EB;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .account-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .account-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .account-type-badge {
+        background: linear-gradient(135deg, #F8FAFC 0%, rgba(37, 99, 235, 0.05) 100%);
+        color: #2563EB;
+        padding: 0.375rem 0.875rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid rgba(37, 99, 235, 0.1);
+    }
+
+    .account-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6B7280;
+        background: #F3F4F6;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        color: #1F2937;
+        background: #E5E7EB;
+    }
+
+    .action-btn.delete:hover {
+        color: #DC2626;
+        background: #FEF2F2;
+    }
+
+    .account-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .account-icon {
+        font-size: 2rem;
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #F8FAFC;
+        border-radius: 12px;
+    }
+
+    .account-details h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .account-balance-label {
+        font-size: 0.875rem;
+        color: #6B7280;
+        margin: 0;
+    }
+
+    .account-footer {
+        border-top: 1px solid #F3F4F6;
+        padding-top: 1rem;
+        margin-top: auto;
+    }
+
+    .balance-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1F2937;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .accounts-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="main-content">
+    <div class="accounts-header">
+        <h1 class="accounts-title">Manage Accounts</h1>
+        <a href="{% url 'add_account' %}" class="btn btn-primary">+ Add New Account</a>
+    </div>
+
+    <div class="accounts-grid">
+        {% for account in accounts %}
+        <div class="account-card">
+            <div class="account-header-row">
+                <span class="account-type-badge">{{ account.get_account_type_display|upper }}</span>
+                <div class="account-actions">
+                    <a href="{% url 'edit_account' account.pk %}" class="action-btn" title="Edit">✎</a>
+                    <a href="{% url 'delete_account' account.pk %}" class="action-btn delete" title="Delete">🗑</a>
+                </div>
+            </div>
+
+            <div class="account-content">
+                <div class="account-icon">
+                    {% if account.account_type == 'bank' %}🏦
+                    {% elif account.account_type == 'cash' %}💵
+                    {% elif account.account_type == 'credit' %}💳
+                    {% elif account.account_type == 'investment' %}📈
+                    {% else %}💰{% endif %}
+                </div>
+                <div class="account-details">
+                    <h3>{{ account.name }}</h3>
+                    <p class="account-balance-label">Current Balance</p>
+                </div>
+            </div>
+
+            <div class="account-footer">
+                <div class="balance-amount">₹{{ account.balance }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+            <p style="color: #6B7280; font-size: 1.125rem;">No accounts found.</p>
+            <a href="{% url 'add_account' %}" class="btn btn-primary" style="margin-top: 1rem;">Add your first
+                account</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import ExpenseForm, IncomeForm, BankAccountForm, CategoryForm
 from .models import Expense, Income, BankAccount, Category
+from django.http import JsonResponse
+import json
 
 @login_required
 def add_expense(request):
@@ -17,6 +19,10 @@ def add_expense(request):
                 expense.account.save()
                 
             expense.save()
+            
+            next_url = request.POST.get('next')
+            if next_url == 'transactions':
+                return redirect('transactions')
             return redirect('dashboard')
     else:
         form = ExpenseForm(request.user)
@@ -25,8 +31,10 @@ def add_expense(request):
         'form': form,
         'title': 'Add Expense',
         'btn_text': 'Spend',
-        'type': 'expense'
+        'type': 'expense',
+        'next': request.GET.get('next', '')
     })
+
 
 @login_required
 def add_income(request):
@@ -42,6 +50,10 @@ def add_income(request):
                 income.account.save()
                 
             income.save()
+            
+            next_url = request.POST.get('next')
+            if next_url == 'transactions':
+                return redirect('transactions')
             return redirect('dashboard')
     else:
         form = IncomeForm(request.user)
@@ -50,8 +62,10 @@ def add_income(request):
         'form': form,
         'title': 'Add Income',
         'btn_text': 'Earn',
-        'type': 'income'
+        'type': 'income',
+        'next': request.GET.get('next', '')
     })
+
 
 @login_required
 def add_account(request):
@@ -74,22 +88,29 @@ def add_account(request):
 
 @login_required
 def add_category(request):
+    # Determine type from GET parameter, default to expense
+    category_type = request.GET.get('type', 'expense')
+    
     if request.method == 'POST':
         form = CategoryForm(request.POST)
         if form.is_valid():
             category = form.save(commit=False)
             category.user = request.user
+            # form should include type as hidden input, or we set it here if missing
+            if not category.type:
+                 category.type = category_type
             category.save()
-            return redirect('add_expense') # Redirect to add expense so they can use it immediately works well
+            return redirect('add_expense') # Default redirect
     else:
-        form = CategoryForm()
+        form = CategoryForm(initial={'type': category_type})
     
     return render(request, 'expenses/add_variable.html', {
         'form': form,
-        'title': 'Create New Category',
+        'title': f'Create New {category_type.title()} Category',
         'btn_text': 'Create',
         'type': 'primary'
     })
+
 
 # --- CRUD Operations ---
 
@@ -184,3 +205,71 @@ def delete_income(request, pk):
         return redirect('transactions')
     
     return render(request, 'expenses/confirm_delete.html', {'object': income, 'type': 'Income'})
+
+@login_required
+def manage_accounts(request):
+    accounts = BankAccount.objects.filter(user=request.user)
+    return render(request, 'expenses/manage_accounts.html', {'accounts': accounts})
+
+@login_required
+def edit_account(request, pk):
+    account = get_object_or_404(BankAccount, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = BankAccountForm(request.POST, instance=account)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_accounts')
+    else:
+        form = BankAccountForm(instance=account)
+    
+    return render(request, 'expenses/add_variable.html', {
+        'form': form,
+        'title': 'Edit Bank Account',
+        'btn_text': 'Update Account',
+        'type': 'primary'
+    })
+
+@login_required
+def delete_account(request, pk):
+    account = get_object_or_404(BankAccount, pk=pk, user=request.user)
+    
+    # Check for linked transactions
+    linked_expenses = Expense.objects.filter(account=account).exists()
+    linked_incomes = Income.objects.filter(account=account).exists()
+    
+    if linked_expenses or linked_incomes:
+        # Prevent deletion
+        return render(request, 'expenses/delete_account_error.html', {
+            'account': account,
+            'linked_expenses': linked_expenses,
+            'linked_incomes': linked_incomes
+        })
+
+    if request.method == 'POST':
+        account.delete()
+        return redirect('manage_accounts')
+    
+    return render(request, 'expenses/confirm_delete.html', {'object': account, 'type': 'Bank Account'})
+
+@login_required
+def api_create_category(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            name = data.get('name')
+            cat_type = data.get('type', 'expense') # Default to expense if not provided
+            
+            if not name:
+                return JsonResponse({'success': False, 'error': 'Name is required'})
+            
+            # Check if exists
+            if Category.objects.filter(user=request.user, name__iexact=name, type=cat_type).exists():
+                 return JsonResponse({'success': False, 'error': 'Category already exists'})
+
+            category = Category.objects.create(user=request.user, name=name, type=cat_type)
+            return JsonResponse({'success': True, 'id': category.id, 'name': category.name})
+        except Exception as e:
+             return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+
