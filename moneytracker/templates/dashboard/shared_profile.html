@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="layout-container" style="max-width: 1000px;">
+    <!-- Header -->
+    <div class="d-flex justify-between align-center mb-4 animate-fade-in-up">
+        <div>
+            <h1 class="font-weight-bold" style="font-size: 2rem;">Shared Hub</h1>
+            <p class="text-muted">Manage your financial connections and shared profiles.</p>
+        </div>
+        <div class="d-flex align-center gap-2">
+            <span class="badge badge-primary px-3 py-2">{{ partners|length }} Active Connections</span>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="card p-4 mb-4 text-{{ message.tags }} animate-scale-in">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="grid-layout animate-fade-in-up stagger-1">
+
+        <!-- Left Column: Invite & Pending -->
+        <div class="d-flex flex-column gap-4">
+
+            <!-- Send Invitation -->
+            <div class="card p-4">
+                <h3 class="mb-4">Invite a Partner</h3>
+                <p class="text-muted text-sm mb-4">Enter a username to send a connection request. Once accepted, you
+                    both share access.</p>
+                <form action="{% url 'send_request' %}" method="POST" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="text" name="username" placeholder="Enter username..." required class="form-control"
+                        style="flex: 1;">
+                    <button type="submit" class="btn btn-primary">Send Invite</button>
+                </form>
+            </div>
+
+            <!-- Incoming Requests -->
+            {% if pending_requests %}
+            <div class="card p-4 border-warning bg-warning-light">
+                <h3 class="mb-4 text-warning">Incoming Requests ({{ pending_requests.count }})</h3>
+                <div class="d-flex flex-column gap-3">
+                    {% for req in pending_requests %}
+                    <div class="request-card d-flex justify-between align-center bg-white p-3 rounded shadow-sm">
+                        <div class="d-flex align-center gap-3">
+                            <div class="avatar-circle">{{ req.sender.username|make_list|first|upper }}</div>
+                            <div>
+                                <div class="font-weight-bold">{{ req.sender.first_name|default:req.sender.username }}
+                                </div>
+                                <div class="text-muted text-xs">Sent {{ req.created_at|date:"M d" }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'respond_request' req.id 'reject' %}"
+                                class="btn btn-sm btn-outline btn-danger py-1 px-3" title="Reject">✕</a>
+                            <a href="{% url 'respond_request' req.id 'accept' %}"
+                                class="btn btn-sm btn-primary py-1 px-3" title="Accept">Accept</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sent Requests -->
+            {% if sent_requests %}
+            <div class="card p-4">
+                <h4 class="mb-3 text-muted">Sent Requests</h4>
+                <div class="d-flex flex-column gap-2">
+                    {% for req in sent_requests %}
+                    <div class="d-flex justify-between align-center p-2 border-bottom">
+                        <span class="text-muted">To: <strong>{{ req.receiver.username }}</strong></span>
+                        <span class="badge badge-neutral text-xs">Pending</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Right Column: Active Connections -->
+        <div class="d-flex flex-column gap-4">
+            <h3 class="mb-0">Your Network</h3>
+
+            {% if partners %}
+            <div class="connections-grid">
+                {% for partner in partners %}
+                <div class="card p-4 connection-card">
+                    <div class="d-flex justify-between align-start mb-3">
+                        <div class="avatar-large">{{ partner.username|make_list|first|upper }}</div>
+                        <div class="status-indicator active"></div>
+                    </div>
+
+                    <h2 class="mb-1">{{ partner.first_name|default:partner.username }}</h2>
+                    <p class="text-muted text-sm mb-4">Connected</p>
+
+                    <div class="stat-row d-flex justify-between mb-2 text-sm">
+                        <span class="text-muted">Joined</span>
+                        <span class="font-weight-bold">{{ partner.date_joined|date:"M Y" }}</span>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <form action="{% url 'disconnect_user' partner.id %}" method="POST"
+                            onsubmit="return confirm('Are you sure you want to disconnect?');">
+                            {% csrf_token %}
+                            <button type="submit"
+                                class="btn btn-outline btn-sm w-100 text-danger border-danger">Disconnect</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card p-6 text-center empty-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">👥</div>
+                <h3>No connections yet</h3>
+                <p class="text-muted">Invite a friend or partner to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .grid-layout {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .grid-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-100);
+        color: var(--primary-600);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    .avatar-large {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
+
+    .connections-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .connection-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .connection-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--success-600);
+        box-shadow: 0 0 0 4px var(--success-100);
+    }
+
+    .bg-warning-light {
+        background-color: #FEFCE8;
+    }
+
+    .border-warning {
+        border-color: #FEF9C3;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+
+    .border-top {
+        border-top: 1px solid var(--border);
+    }
+
+    .text-xs {
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}

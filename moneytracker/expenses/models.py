@@ -64,5 +64,25 @@ class Expense(models.Model):
 class Budget(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     month = models.DateField()
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    limit_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True)
+    limit_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'month', 'category')
+        ordering = ['-month', 'category__name']
+
+    def __str__(self):
+        cat = self.category.name if self.category else "Total"
+        return f"{self.user.username} - {self.month} - {cat}"
+
+class BudgetNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='notifications')
+    sent_at = models.DateTimeField(auto_now_add=True)
+    exceeded_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Notification for {self.budget.id}"

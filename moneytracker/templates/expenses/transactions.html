@@ -1,136 +1,1591 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
-<div class="layout-container" style="padding: 2rem 0;">
-    <!-- Header Section -->
-    <div class="d-flex justify-between align-center mb-4" style="flex-wrap: wrap; gap: 1.5rem;">
-        <div>
-            <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+<div class="layout-container">
+    <!-- Modern Header with Visual Hierarchy -->
+    <div class="page-header-wrapper">
+        <div class="page-header-content">
+            <div class="header-title-section">
+                <div class="breadcrumb">
+                    <a href="{% url 'dashboard' %}" class="breadcrumb-link">Dashboard</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">Transactions</span>
+                </div>
+                
+                <h1 class="page-title">
+                    {% if view_type == 'me' %}
+                    <span class="title-gradient">My Transactions</span>
+                    {% else %}
+                    <span class="title-gradient">{{ partner.username }}'s Activity</span>
+                    {% endif %}
+                </h1>
+                
+                <p class="page-subtitle">
+                    {% if view_type == 'me' %}
+                    Track every penny, master your wealth
+                    {% else %}
+                    Shared financial insights from {{ partner.username }}
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="header-actions">
                 {% if view_type == 'me' %}
-                My Transactions
+                <div class="action-buttons-group">
+                    <a href="{% url 'add_expense' %}?next=transactions" class="btn btn-icon btn-expense" title="Record Expense">
+                        <span class="btn-icon-wrapper">
+                            <i class="fas fa-minus-circle"></i>
+                        </span>
+                        <span class="btn-text">Add Expense</span>
+                    </a>
+                    <a href="{% url 'add_income' %}?next=transactions" class="btn btn-icon btn-income" title="Record Income">
+                        <span class="btn-icon-wrapper">
+                            <i class="fas fa-plus-circle"></i>
+                        </span>
+                        <span class="btn-text">Add Income</span>
+                    </a>
+                    {% if has_partner %}
+                    <a href="{% url 'partner_transactions' %}" class="btn btn-outline btn-partner">
+                        <i class="fas fa-user-friends"></i>
+                        Partner Activity
+                    </a>
+                    {% endif %}
+                </div>
                 {% else %}
-                {{ partner.username }}'s Activity
+                <a href="{% url 'transactions' %}" class="btn btn-outline btn-back">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to My Transactions
+                </a>
                 {% endif %}
-            </h1>
-            <p class="text-muted" style="font-size: 1rem;">
-                {% if view_type == 'me' %}
-                Your personal financial history.
-                {% else %}
-                Viewing shared details from your partner.
-                {% endif %}
-            </p>
+            </div>
         </div>
-
-        <div class="actions" style="display: flex; gap: 1rem;">
-            {% if view_type == 'me' %}
-            <a href="{% url 'add_expense' %}?next=transactions" class="btn btn-primary"
-                style="background: #DC2626; border-color: #DC2626;">− Expense</a>
-            <a href="{% url 'add_income' %}?next=transactions" class="btn btn-primary"
-                style="background: #16A34A; border-color: #16A34A;">+ Income</a>
-            {% if has_partner %}
-
-            <a href="{% url 'partner_transactions' %}" class="btn btn-outline">
-                View Partner's Activity →
-            </a>
-            {% endif %}
-            {% else %}
-            <a href="{% url 'transactions' %}" class="btn btn-outline">
-                ← Back to My Transactions
-            </a>
-            {% endif %}
+        
+        <!-- Stats Summary Bar -->
+        <div class="stats-summary-bar">
+            <div class="stat-item">
+                <div class="stat-label">Total Income</div>
+                <div class="stat-value positive">+₹{{ filtered_total_income|default:0|intcomma }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-label">Total Expense</div>
+                <div class="stat-value negative">−₹{{ filtered_total_expense|default:0|intcomma }}</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-label">Net Balance</div>
+                <div class="stat-value {% if filtered_net_total >= 0 %}positive{% else %}negative{% endif %}">
+                    {% if filtered_net_total >= 0 %}
+                    +₹{{ filtered_net_total|default:0|floatformat:2|intcomma }}
+                    {% else %}
+                    −₹{{ filtered_net_total|default:0|floatformat:2|cut:"-"|intcomma }}
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Partner Accounts Preview -->
     {% if view_type == 'partner' and accounts %}
-    <!-- Partner Accounts Section -->
-    <div class="mb-4" style="margin-bottom: 2rem;">
-        <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-weight: 700;">{{ partner.username }}'s Accounts</h3>
-        <div class="accounts-carousel">
+    <div class="partner-accounts-section">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-wallet"></i>
+                {{ partner.username }}'s Accounts
+            </h3>
+        </div>
+        <div class="accounts-grid">
             {% for account in accounts %}
-            <div class="account-card-item" style="min-width: 250px;">
-                <span class="badge badge-primary mb-4">{{ account.get_account_type_display|upper }}</span>
-                <div class="d-flex justify-between align-center mt-2" style="margin-top: 1rem;">
-                    <span class="text-muted"
-                        style="text-transform: uppercase; font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">{{
-                        account.name }}</span>
+            <div class="account-card">
+                <div class="account-card-header">
+                    <span class="account-type-badge">{{ account.get_account_type_display|upper }}</span>
+                    <div class="account-actions">
+                        <button class="icon-btn" title="View Details">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="stat-value" style="font-size: 1.5rem;">₹{{ account.balance }}</div>
+                <div class="account-card-body">
+                    <h4 class="account-name">{{ account.name }}</h4>
+                    <div class="account-balance">₹{{ account.balance|intcomma }}</div>
+                </div>
+                <div class="account-card-footer">
+                    <div class="account-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            Updated recently
+                        </span>
+                    </div>
+                </div>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Transactions Table -->
-    <div class="card table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Account</th>
-                    <th style="text-align: right;">Amount</th>
-                    {% if view_type == 'me' %}
-                    <th style="text-align: center;">Actions</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in transactions %}
-                <tr>
-                    <td style="font-weight: 500;">{{ t.date|date:"M d, Y" }}</td>
-                    <td>
-                        <span style="font-weight: 500; color: var(--text-primary);">{{ t.description }}</span>
-                    </td>
-                    <td>
-                        <span class="badge {% if t.type == 'income' %}badge-success{% else %}badge-neutral{% endif %}">
-                            {{ t.category|default:"—" }}
-                        </span>
-                    </td>
-                    <td>
-                        <span style="color: var(--text-secondary);">{{ t.account.name|default:"—" }}</span>
-                    </td>
-                    <td
-                        style="text-align: right; font-weight: 700; {% if t.type == 'income' %}color: var(--success-600);{% else %}color: var(--danger-600);{% endif %}">
-                        {% if t.type == 'income' %}+{% else %}−{% endif %}₹{{ t.amount }}
-                    </td>
-                    {% if view_type == 'me' %}
-                    <td style="text-align: center;">
-                        <div class="d-flex gap-2" style="justify-content: center;">
-                            {% if t.type == 'expense' %}
-                            <a href="{% url 'edit_expense' t.id %}" class="btn btn-outline"
-                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;"
-                                title="Edit transaction">✏️ Edit</a>
-                            <a href="{% url 'delete_expense' t.id %}" class="btn btn-outline"
-                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;"
-                                title="Delete transaction">🗑️ Delete</a>
-                            {% else %}
-                            <a href="{% url 'edit_income' t.id %}" class="btn btn-outline"
-                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; white-space: nowrap;"
-                                title="Edit transaction">✏️ Edit</a>
-                            <a href="{% url 'delete_income' t.id %}" class="btn btn-outline"
-                                style="padding: 0.375rem 0.75rem; font-size: 0.9rem; border-color: var(--danger-100); color: var(--danger-600); white-space: nowrap;"
-                                title="Delete transaction">🗑️ Delete</a>
+    <!-- Advanced Filter Panel -->
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-panel-header">
+            <div class="filter-header-left">
+                <h3 class="filter-title">
+                    <i class="fas fa-filter"></i>
+                    Filter Transactions
+                </h3>
+                <button type="button" class="filter-toggle-btn" onclick="toggleFilterPanel()">
+                    <i class="fas fa-chevron-up"></i>
+                    <span class="toggle-text">Hide Filters</span>
+                </button>
+            </div>
+            <div class="filter-results-info">
+                <span class="results-count">{{ page_obj.paginator.count|default:0 }} transactions found</span>
+            </div>
+        </div>
+        
+        <div class="filter-panel-body" id="filterBody">
+            <form method="GET" action="" class="filter-form">
+                <div class="filter-grid">
+                    <!-- Search -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-search"></i>
+                            Search
+                        </label>
+                        <div class="input-with-icon">
+                            <input type="text" name="search" placeholder="Search by description..." 
+                                   value="{{ search_query|default:'' }}" class="filter-input">
+                        </div>
+                    </div>
+
+                    <!-- Account Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-credit-card"></i>
+                            Account
+                        </label>
+                        <div class="select-wrapper">
+                            <select name="account" class="filter-select">
+                                <option value="">All Accounts</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}" {% if selected_account == acc.id %}selected{% endif %}>
+                                    {{ acc.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            <i class="fas fa-tag"></i>
+                            Category
+                        </label>
+                        <div class="select-wrapper">
+                            <select name="category" class="filter-select">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+
+                    <!-- Quick Date Presets -->
+                    <div class="filter-group">
+                        <label class="filter-label">Quick Filters</label>
+                        <div class="quick-filters">
+                            <button type="button" class="quick-filter-btn" data-days="7">Last 7 Days</button>
+                            <button type="button" class="quick-filter-btn" data-days="30">Last 30 Days</button>
+                            <button type="button" class="quick-filter-btn" data-days="90">Last 90 Days</button>
+                            <button type="button" class="quick-filter-btn" data-days="365">This Year</button>
+                        </div>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="filter-group date-range-group">
+                        <label class="filter-label">
+                            <i class="fas fa-calendar-alt"></i>
+                            Date Range
+                        </label>
+
+                        <div class="date-range-inputs">
+                            <!-- FROM -->
+                            <div class="date-field">
+                                <label class="sub-label">From</label>
+                                <input
+                                    type="date"
+                                    name="start_date"
+                                    value="{{ start_date|default:'' }}"
+                                    class="date-input"
+                                    max="{{ end_date|default:'' }}"
+                                >
+                            </div>
+
+                            <div class="date-separator">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+
+                            <!-- TO -->
+                            <div class="date-field">
+                                <label class="sub-label">To</label>
+                                <input
+                                    type="date"
+                                    name="end_date"
+                                    value="{{ end_date|default:'' }}"
+                                    class="date-input"
+                                    min="{{ start_date|default:'' }}"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="filter-actions">
+                    <div class="action-left">
+                        <button type="submit" name="export" value="csv" class="btn btn-export">
+                            <i class="fas fa-download"></i>
+                            Export CSV
+                        </button>
+                    </div>
+                    <div class="action-right">
+                        <a href="{% url 'transactions' %}" class="btn btn-outline btn-reset">
+                            <i class="fas fa-redo"></i>
+                            Reset All
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-apply">
+                            <i class="fas fa-check"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transactions Table/List -->
+    <div class="transactions-container">
+        {% if page_obj %}
+        <!-- Desktop Table View -->
+        <div class="transactions-table-container desktop-view">
+            <div class="table-responsive">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th class="column-date">
+                                <span class="column-header">
+                                    Date
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </span>
+                            </th>
+                            <th class="column-description">Description</th>
+                            <th class="column-category">Category</th>
+                            <th class="column-account">Account</th>
+                            <th class="column-amount">Amount</th>
+                            {% if view_type == 'me' %}
+                            <th class="column-actions">Actions</th>
                             {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in page_obj %}
+                        <tr class="transaction-row {% if t.type == 'income' %}income-row{% else %}expense-row{% endif %}">
+                            <td class="cell-date">
+                                <div class="date-cell">
+                                    <div class="date-day">{{ t.date|date:"d" }}</div>
+                                    <div class="date-month">{{ t.date|date:"M" }}</div>
+                                </div>
+                            </td>
+                            <td class="cell-description">
+                                <div class="description-cell">
+                                    <div class="description-text">{{ t.description|default:"—" }}</div>
+                                    {% if t.notes %}
+                                    <div class="description-notes">
+                                        <i class="fas fa-sticky-note"></i>
+                                        {{ t.notes|truncatechars:30 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="cell-category">
+                                <span class="category-badge {% if t.type == 'income' %}badge-income{% else %}badge-expense{% endif %}">
+                                    <i class="fas {{ t.category.icon|default:'fa-tag' }}"></i>
+                                    {{ t.category.name|default:"General" }}
+                                </span>
+                            </td>
+                            <td class="cell-account">
+                                <div class="account-cell">
+                                    <div class="account-icon">
+                                        {% if t.account.type == 'bank' %}
+                                        <i class="fas fa-university"></i>
+                                        {% elif t.account.type == 'cash' %}
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        {% else %}
+                                        <i class="fas fa-wallet"></i>
+                                        {% endif %}
+                                    </div>
+                                    <span class="account-name">{{ t.account.name|default:"—" }}</span>
+                                </div>
+                            </td>
+                            <td class="cell-amount">
+                                <div class="amount-cell {% if t.type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+                                    <span class="amount-sign">{% if t.type == 'income' %}+{% else %}−{% endif %}</span>
+                                    <span class="amount-value">₹{{ t.amount|intcomma }}</span>
+                                </div>
+                            </td>
+                            {% if view_type == 'me' %}
+                            <td class="cell-actions">
+                                <div class="actions-cell">
+                                    {% if t.type == 'expense' %}
+                                    <a href="{% url 'edit_expense' t.id %}" class="action-btn action-edit" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete_expense' t.id %}" class="action-btn action-delete" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'edit_income' t.id %}" class="action-btn action-edit" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete_income' t.id %}" class="action-btn action-delete" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button class="action-btn action-more" title="More options">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="transactions-list-container mobile-view">
+            {% for t in page_obj %}
+            <div class="transaction-card {% if t.type == 'income' %}card-income{% else %}card-expense{% endif %}">
+                <div class="card-header">
+                    <div class="card-date">
+                        <span class="date-display">{{ t.date|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="card-amount {% if t.type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+                        {% if t.type == 'income' %}+{% else %}−{% endif %}₹{{ t.amount|intcomma }}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <h4 class="card-title">{{ t.description|default:"—" }}</h4>
+                    
+                    <div class="card-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">
+                                <i class="fas fa-tag"></i>
+                            </span>
+                            <span class="meta-text">{{ t.category.name|default:"General" }}</span>
                         </div>
-                    </td>
+                        <div class="meta-item">
+                            <span class="meta-icon">
+                                <i class="fas fa-wallet"></i>
+                            </span>
+                            <span class="meta-text">{{ t.account.name|default:"Cash" }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if t.notes %}
+                    <div class="card-notes">
+                        <i class="fas fa-sticky-note"></i>
+                        {{ t.notes|truncatechars:50 }}
+                    </div>
                     {% endif %}
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="{% if view_type == 'me' %}6{% else %}5{% endif %}" class="text-center"
-                        style="padding: 3rem; color: var(--text-muted);">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
-                            <div style="font-size: 2.5rem; opacity: 0.3;">📭</div>
-                            <p style="margin: 0;">No transactions found</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </div>
+                
+                {% if view_type == 'me' %}
+                <div class="card-footer">
+                    <div class="card-actions">
+                        {% if t.type == 'expense' %}
+                        <a href="{% url 'edit_expense' t.id %}" class="card-action-btn">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </a>
+                        <a href="{% url 'delete_expense' t.id %}" class="card-action-btn text-danger">
+                            <i class="fas fa-trash-alt"></i>
+                            Delete
+                        </a>
+                        {% else %}
+                        <a href="{% url 'edit_income' t.id %}" class="card-action-btn">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </a>
+                        <a href="{% url 'delete_income' t.id %}" class="card-action-btn text-danger">
+                            <i class="fas fa-trash-alt"></i>
+                            Delete
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3 class="empty-state-title">No Transactions Found</h3>
+            <p class="empty-state-description">
+                {% if search_query or selected_account or selected_category %}
+                Try adjusting your filters or search terms
+                {% else %}
+                Start by adding your first transaction
+                {% endif %}
+            </p>
+            {% if view_type == 'me' %}
+            <div class="empty-state-actions">
+                <a href="{% url 'add_expense' %}" class="btn btn-expense">
+                    <i class="fas fa-minus-circle"></i>
+                    Add Expense
+                </a>
+                <a href="{% url 'add_income' %}" class="btn btn-income">
+                    <i class="fas fa-plus-circle"></i>
+                    Add Income
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination-wrapper">
+            <div class="pagination-container">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&{{ query_string }}" class="pagination-btn pagination-prev">
+                    <i class="fas fa-chevron-left"></i>
+                    Previous
+                </a>
+                {% endif %}
+
+                <div class="pagination-pages">
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                        <span class="page-number current">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}&{{ query_string }}" class="page-number">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="pagination-info">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </div>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&{{ query_string }}" class="pagination-btn pagination-next">
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<style>
+    /* CSS Variables for Consistent Design System */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --surface-bg: #ffffff;
+        --surface-elevated: #ffffff;
+        --surface-hover: #f8fafc;
+        --border-color: #e2e8f0;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+        --info-color: #3b82f6;
+        --spacing-xs: 0.5rem;
+        --spacing-sm: 0.75rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --transition-fast: 150ms ease;
+        --transition-normal: 250ms ease;
+    }
+
+    /* Base Layout */
+    .layout-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-lg);
+    }
+
+    /* Header Styles */
+    .page-header-wrapper {
+        background: var(--surface-bg);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .page-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .breadcrumb-link:hover {
+        color: var(--text-primary);
+    }
+
+    .breadcrumb-separator {
+        color: var(--text-tertiary);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0 0 var(--spacing-xs) 0;
+        letter-spacing: -0.025em;
+    }
+
+    .title-gradient {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .page-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.125rem;
+        margin: 0;
+    }
+
+    /* Stats Summary Bar */
+    .stats-summary-bar {
+        display: flex;
+        align-items: center;
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    .stat-item {
+        flex: 1;
+        text-align: center;
+        padding: 0 var(--spacing-md);
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 40px;
+        background: var(--border-color);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xs);
+        font-weight: 600;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    .stat-value.positive {
+        color: var(--success-color);
+    }
+
+    .stat-value.negative {
+        color: var(--danger-color);
+    }
+
+    /* Partner Accounts */
+    .partner-accounts-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .section-header {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .accounts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--spacing-md);
+    }
+
+    .account-card {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        border: 1px solid var(--border-color);
+        transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    }
+
+    .account-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Filter Panel */
+    .filter-panel {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .filter-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-lg);
+        background: var(--surface-hover);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .filter-header-left {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .filter-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .filter-toggle-btn {
+        background: none;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        transition: all var(--transition-fast);
+    }
+
+    .filter-toggle-btn:hover {
+        background: var(--surface-bg);
+    }
+
+    .filter-results-info {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .filter-panel-body {
+        padding: var(--spacing-lg);
+    }
+
+    .filter-panel-body {
+        transition: max-height 0.35s ease, opacity 0.25s ease;
+        overflow: hidden;
+    }
+
+    .filter-panel-body.hidden {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: var(--spacing-md);
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) calc(var(--spacing-md) * 2 + 0.5rem);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        transition: border-color var(--transition-fast);
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .select-wrapper {
+        position: relative;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: var(--spacing-md);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+        background: white;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .select-arrow {
+        position: absolute;
+        right: var(--spacing-md);
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--text-tertiary);
+    }
+
+    /* Type Toggle */
+    .type-toggle {
+        display: flex;
+        gap: var(--spacing-xs);
+        background: var(--surface-hover);
+        padding: 2px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .toggle-option {
+        flex: 1;
+        text-align: center;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: calc(var(--border-radius-sm) - 2px);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: 2px solid transparent;
+    }
+
+    .toggle-option.active {
+        background: white;
+        border-color: var(--border-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .income-option.active {
+        color: var(--success-color);
+    }
+
+    .expense-option.active {
+        color: var(--danger-color);
+    }
+
+    /* Date Range */
+    .date-range-group {
+        grid-column: 1 / -1;
+    }
+
+    .date-range-inputs {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .date-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .date-input {
+        width: 100%;
+        padding: var(--spacing-md);
+        padding-top: calc(var(--spacing-md) * 1.5);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.875rem;
+    }
+
+    .date-label {
+        position: absolute;
+        top: var(--spacing-xs);
+        left: var(--spacing-md);
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .date-separator {
+        color: var(--text-tertiary);
+    }
+
+    /* Quick Filters */
+    .quick-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+
+    .quick-filter-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        background: white;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .quick-filter-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    /* Filter Actions */
+    .filter-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .action-left, .action-right {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    /* Button Styles */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: 2px solid transparent;
+    }
+
+    .btn-icon {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .btn-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-outline {
+        background: white;
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .btn-expense {
+        background: var(--danger-gradient);
+        color: white;
+    }
+
+    .btn-income {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .btn-export {
+        background: var(--warning-gradient);
+        color: white;
+    }
+
+    /* Transactions Table */
+    .transactions-table-container {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .transactions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .transactions-table thead {
+        background: var(--surface-hover);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .transactions-table th {
+        padding: var(--spacing-lg);
+        text-align: left;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .transactions-table td {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .transaction-row:hover {
+        background: var(--surface-hover);
+    }
+
+    .column-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .sort-icon {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        cursor: pointer;
+    }
+
+    /* Table Cell Styles */
+    .date-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 60px;
+    }
+
+    .date-day {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .date-month {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .description-cell {
+        max-width: 300px;
+    }
+
+    .description-text {
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .description-notes {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-income {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .badge-expense {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .account-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .account-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--surface-hover);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+    }
+
+    .amount-cell {
+        font-weight: 700;
+        font-size: 1.125rem;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .amount-income {
+        color: var(--success-color);
+    }
+
+    .amount-expense {
+        color: var(--danger-color);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-hover);
+        color: var(--text-secondary);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .action-btn:hover {
+        background: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .action-delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    /* Mobile Transaction Cards */
+    .mobile-view {
+        display: none;
+    }
+
+    .transaction-card {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+        border: 1px solid var(--border-color);
+        transition: transform var(--transition-normal);
+    }
+
+    .transaction-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-income {
+        border-left: 4px solid var(--success-color);
+    }
+
+    .card-expense {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .card-date {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .card-amount {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 var(--spacing-md) 0;
+    }
+
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .meta-icon {
+        color: var(--text-tertiary);
+    }
+
+    .card-notes {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        padding: var(--spacing-sm);
+        background: var(--surface-hover);
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .card-footer {
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .card-actions {
+        display: flex;
+        gap: var(--spacing-lg);
+    }
+
+    .card-action-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: var(--text-secondary);
+        transition: color var(--transition-fast);
+    }
+
+    .card-action-btn:hover {
+        color: var(--text-primary);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-md);
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        border: 2px dashed var(--border-color);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--text-tertiary);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .empty-state-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    .empty-state-description {
+        color: var(--text-secondary);
+        margin: 0 0 var(--spacing-lg) 0;
+        max-width: 400px;
+        margin: 0 auto var(--spacing-lg) auto;
+    }
+
+    .empty-state-actions {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-md);
+    }
+
+    /* Pagination */
+    .pagination-wrapper {
+        margin-top: var(--spacing-xl);
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+    }
+
+    .pagination-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        background: white;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all var(--transition-fast);
+    }
+
+    .pagination-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .pagination-pages {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+
+    .page-number {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--border-radius-sm);
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 500;
+        transition: all var(--transition-fast);
+    }
+
+    .page-number.current {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .page-number:not(.current):hover {
+        background: var(--surface-hover);
+    }
+
+    .pagination-info {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .layout-container {
+            padding: var(--spacing-md);
+        }
+        
+        .page-header-content {
+            flex-direction: column;
+        }
+        
+        .stats-summary-bar {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .stat-divider {
+            width: 100%;
+            height: 1px;
+        }
+        
+        .filter-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .mobile-view {
+            display: block;
+        }
+        
+        .desktop-view {
+            display: none;
+        }
+        
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .date-range-inputs {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .filter-actions {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .action-left, .action-right {
+            width: 100%;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .accounts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .pagination-container {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+        }
+        
+        .transaction-card {
+            padding: var(--spacing-md);
+        }
+        
+        .empty-state-actions {
+            flex-direction: column;
+        }
+    }
+
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .transaction-row {
+        animation: fadeIn 0.3s ease-out;
+    }
+    .hidden {
+        display: none !important;
+    }
+
+    .date-range-inputs {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--spacing-md);
+    }
+
+    .date-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sub-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .date-input {
+        width: 100%;
+        padding: 0.75rem 0.85rem;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        background: white;
+    }
+
+    .date-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+    }
+
+    .date-separator {
+        margin-top: 22px;
+        color: var(--text-tertiary);
+    }
+
+</style>
+
+<script>
+    // Filter Panel Toggle
+    function toggleFilterPanel() {
+        const filterBody = document.getElementById('filterBody');
+        const toggleBtn = document.querySelector('.filter-toggle-btn');
+        const toggleIcon = toggleBtn.querySelector('i');
+        const toggleText = toggleBtn.querySelector('.toggle-text');
+        
+        filterBody.classList.toggle('hidden');
+        if (filterBody.classList.contains('hidden')) {
+            toggleIcon.className = 'fas fa-chevron-down';
+            toggleText.textContent = 'Show Filters';
+        } else {
+            toggleIcon.className = 'fas fa-chevron-up';
+            toggleText.textContent = 'Hide Filters';
+        }
+    }
+
+    // Quick Date Presets
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const days = parseInt(this.dataset.days);
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - days);
+            
+            // Format dates as YYYY-MM-DD
+            const formatDate = (date) => date.toISOString().split('T')[0];
+            
+            // Find and set date inputs
+            document.querySelector('input[name="start_date"]').value = formatDate(startDate);
+            document.querySelector('input[name="end_date"]').value = formatDate(endDate);
+            
+            // Submit the form
+            document.querySelector('.filter-form').submit();
+        });
+    });
+
+    // Date range validation
+    document.querySelectorAll('.date-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const startDate = document.querySelector('input[name="start_date"]');
+            const endDate = document.querySelector('input[name="end_date"]');
+            
+            if (startDate.value && endDate.value && startDate.value > endDate.value) {
+                alert('Start date cannot be after end date');
+                this.value = '';
+            }
+        });
+    });
+
+    // Initialize animations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add staggered animation to transaction rows
+        const rows = document.querySelectorAll('.transaction-row, .transaction-card');
+        rows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.05}s`;
+        });
+    });
+</script>
 {% endblock %}

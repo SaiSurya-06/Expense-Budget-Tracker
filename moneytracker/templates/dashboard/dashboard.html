@@ -1,616 +1,1675 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
+<div class="dashboard-main-content">
+    <!-- Premium Welcome Header with Animated Background -->
+    <div class="dashboard-welcome-header animate-fade-in-up">
+        <div class="dashboard-welcome-bg-pattern"></div>
+        <div class="dashboard-welcome-content">
+            <div class="dashboard-welcome-text">
+                <div class="dashboard-time-badge">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+                <h1 class="dashboard-greeting-title">
+                    <span id="greetingText">Hello</span>,
+                    <span class="dashboard-user-highlight">{{ welcome_name|capfirst }}</span>!
+                    <span class="dashboard-wave-emoji">👋</span>
+                </h1>
+                <p class="dashboard-date-subtitle">
+                    Here's your financial overview for <span class="dashboard-current-date">{% now "F j, Y" %}</span>
+                </p>
+            </div>
+
+            <div class="dashboard-quick-actions">
+                <a href="{% url 'add_expense' %}" class="dashboard-quick-action-btn dashboard-action-expense"
+                    title="Add Expense" data-tooltip="Record a new expense">
+                    <span class="dashboard-action-icon-wrapper">
+                        <i class="fas fa-minus-circle"></i>
+                    </span>
+                    <span class="dashboard-action-label">Expense</span>
+                    <span class="dashboard-action-arrow">→</span>
+                </a>
+
+                <a href="{% url 'add_income' %}" class="dashboard-quick-action-btn dashboard-action-income"
+                    title="Add Income" data-tooltip="Record new income">
+                    <span class="dashboard-action-icon-wrapper">
+                        <i class="fas fa-plus-circle"></i>
+                    </span>
+                    <span class="dashboard-action-label">Income</span>
+                    <span class="dashboard-action-arrow">→</span>
+                </a>
+
+                <a href="{% url 'add_account' %}" class="dashboard-quick-action-btn dashboard-action-account"
+                    title="Add Account" data-tooltip="Create new account">
+                    <span class="dashboard-action-icon-wrapper">
+                        <i class="fas fa-university"></i>
+                    </span>
+                    <span class="dashboard-action-label">Account</span>
+                    <span class="dashboard-action-arrow">→</span>
+                </a>
+
+                <a href="{% url 'add_category' %}" class="dashboard-quick-action-btn dashboard-action-category"
+                    title="Add Category" data-tooltip="Create category">
+                    <span class="dashboard-action-icon-wrapper">
+                        <i class="fas fa-folder-plus"></i>
+                    </span>
+                    <span class="dashboard-action-label">Category</span>
+                    <span class="dashboard-action-arrow">→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Stats Grid with Live Counter Animation -->
+    <div class="dashboard-stats-grid animate-fade-in-up stagger-1">
+        <div class="dashboard-stat-card primary">
+            <div class="stat-card-glow"></div>
+            <div class="stat-card-content">
+                <div class="stat-header">
+                    <div class="stat-title-wrapper">
+                        <h3 class="stat-title">Net Worth</h3>
+                        <p class="stat-subtitle">Total value across all accounts</p>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-landmark"></i>
+                        <div class="stat-icon-pulse"></div>
+                    </div>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value" data-target="{{ user_balance }}">₹0</div>
+                    <div class="stat-trend">
+                        <span class="trend-indicator positive">
+                            <i class="fas fa-arrow-up"></i> Live
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-stat-card success">
+            <div class="stat-card-glow"></div>
+            <div class="stat-card-content">
+                <div class="stat-header">
+                    <div class="stat-title-wrapper">
+                        <h3 class="stat-title">Monthly Income</h3>
+                        <p class="stat-subtitle">Total earnings this month</p>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <div class="stat-icon-pulse"></div>
+                    </div>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value positive" data-target="{{ total_income }}">+₹0</div>
+                    <div class="stat-trend">
+                        <span class="trend-indicator positive">
+                            <i class="fas fa-arrow-up"></i> Live
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-stat-card danger">
+            <div class="stat-card-glow"></div>
+            <div class="stat-card-content">
+                <div class="stat-header">
+                    <div class="stat-title-wrapper">
+                        <h3 class="stat-title">Monthly Expenses</h3>
+                        <p class="stat-subtitle">Total spending this month</p>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-shopping-cart"></i>
+                        <div class="stat-icon-pulse"></div>
+                    </div>
+                </div>
+                <div class="stat-body">
+                    <div class="stat-value negative" data-target="{{ total_expenses }}">−₹0</div>
+                    <div class="stat-trend">
+                        <span class="trend-indicator neutral">
+                            <i class="fas fa-minus"></i> Live
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Analytics Grid with Interactive Charts -->
+    <div class="dashboard-analytics-grid animate-fade-in-up stagger-2">
+        <!-- Cash Flow Chart with Enhanced Design -->
+        <div class="dashboard-chart-card">
+            <div class="chart-card-header">
+                <div class="chart-card-title-wrapper">
+                    <h3 class="chart-card-title">
+                        <i class="fas fa-exchange-alt"></i>
+                        Cash Flow Analysis
+                    </h3>
+                    <p class="chart-card-subtitle">Income vs. Expenses</p>
+                </div>
+                <div class="chart-card-actions">
+                    <div class="cashflow-filter">
+                        <select id="monthSelect">
+                            {% for m in months %}
+                                <option value="{{ m.value }}"
+                                    {% if selected_month == m.value %}selected{% endif %}>
+                                    {{ m.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <select id="yearSelect">
+                            {% for y in years %}
+                                <option value="{{ y.value }}"
+                                    {% if selected_year == y.value %}selected{% endif %}>
+                                    {{ y.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="cashFlowChart"></canvas>
+            </div>
+            <div class="chart-summary">
+                <div class="chart-summary-item">
+                    <span class="summary-label">Net Cash Flow</span>
+                    <span class="summary-value positive">₹{{ net_cash_flow|default:"0" }}</span>
+                </div>
+                <div class="chart-summary-item">
+                    <span class="summary-label">Savings Rate</span>
+                    <span class="summary-value" id="savingsRate">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spending Breakdown Chart with Enhanced Interactivity -->
+        <div class="dashboard-chart-card">
+            <div class="chart-card-header">
+                <div class="chart-card-title-wrapper">
+                    <h3 class="chart-card-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Spending Breakdown
+                    </h3>
+                    <p class="chart-card-subtitle">Category distribution</p>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                {% if total_expenses > 0 %}
+                <canvas id="expensePieChart"></canvas>
+                <div class="chart-center-label">
+                    <div class="center-label-value">₹{{ total_expenses }}</div>
+                    <div class="center-label-text">Total</div>
+                </div>
+                {% else %}
+                <div class="dashboard-empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="empty-state-content">
+                        <h4 class="empty-state-title">No expenses yet</h4>
+                        <p class="empty-state-description">Start adding expenses to see your spending breakdown.</p>
+                        <a href="{% url 'add_expense' %}" class="empty-state-action">
+                            <i class="fas fa-plus-circle"></i>
+                            Add First Expense
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Accounts Section with Premium Cards -->
+    <div class="dashboard-accounts-section animate-fade-in-up stagger-3">
+        <div class="accounts-header">
+            <div class="accounts-title-wrapper">
+                <h2 class="accounts-title">
+                    <i class="fas fa-wallet"></i>
+                    My Accounts
+                    <span class="accounts-count-badge">{{ user_accounts|length }}</span>
+                </h2>
+                <p class="accounts-subtitle">Manage your financial accounts</p>
+            </div>
+            <a href="{% url 'add_account' %}" class="dashboard-btn-add">
+                <i class="fas fa-plus"></i>
+                Add New Account
+            </a>
+        </div>
+
+        <div class="dashboard-accounts-carousel">
+            {% for account in user_accounts %}
+            <div class="dashboard-account-card" data-account-type="{{ account.account_type }}">
+                <div class="account-card-shine"></div>
+                <div class="account-card-header">
+                    <span class="account-type-badge {{ account.account_type }}">
+                        {{ account.get_account_type_display|upper }}
+                    </span>
+                    <a href="{% url 'edit_account' account.pk %}" class="account-edit-btn" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </div>
+                <div class="account-card-content">
+                    <div class="account-icon-wrapper {{ account.account_type }}">
+                        {% if account.account_type == 'bank' %}
+                        <i class="fas fa-university"></i>
+                        {% elif account.account_type == 'cash' %}
+                        <i class="fas fa-money-bill-wave"></i>
+                        {% elif account.account_type == 'credit' %}
+                        <i class="fas fa-credit-card"></i>
+                        {% elif account.account_type == 'investment' %}
+                        <i class="fas fa-chart-line"></i>
+                        {% else %}
+                        <i class="fas fa-wallet"></i>
+                        {% endif %}
+                    </div>
+                    <div class="account-details">
+                        <h4 class="account-name">{{ account.name }}</h4>
+                        <p class="account-balance-label">Current Balance</p>
+                        <div class="account-balance-value">₹{{ account.balance }}</div>
+                    </div>
+                </div>
+                <div class="account-card-footer">
+                    <div class="account-progress-bar">
+                        <div class="account-progress-fill {{ account.account_type }}"></div>
+                    </div>
+                    <div class="account-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            Updated recently
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="dashboard-empty-account-card" onclick="window.location='{% url 'add_account' %}'">
+                <div class="empty-card-pulse"></div>
+                <div class="empty-card-content">
+                    <div class="empty-card-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="empty-card-text">
+                        <h4>Add your first account</h4>
+                        <p>Start tracking your finances</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Premium CSS Styles -->
 <style>
-.main-content {
-    padding: 0;
-    padding-bottom: 30px;
-    padding-top: 30px;
-}
-.welcome-header {
-    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 25px rgba(30, 58, 138, 0.1);
-    color: white;
-}
-
-.welcome-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-}
-
-.welcome-text h1 {
-    font-size: 1.875rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-    line-height: 1.3;
-}
-
-.welcome-text p {
-    font-size: 1rem;
-    opacity: 0.9;
-    margin: 0;
-}
-
-.quick-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.quick-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    text-decoration: none;
-    color: white;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
-
-.quick-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.quick-action-btn .icon {
-    font-size: 1.25rem;
-    font-weight: bold;
-}
-
-.btn-expense .icon { color: #F59E0B; }
-.btn-income .icon { color: #16A34A; }
-.btn-account .icon { color: #2563EB; }
-.btn-category .icon { color: #8B5CF6; }
-
-.stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 4px solid transparent;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-}
-
-.stat-card.primary {
-    border-left-color: #1E3A8A;
-}
-
-.stat-card.success {
-    border-left-color: #16A34A;
-}
-
-.stat-card.danger {
-    border-left-color: #DC2626;
-}
-
-.stat-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #6B7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.25rem;
-}
-
-.stat-icon {
-    font-size: 1.5rem;
-    opacity: 0.8;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0.5rem 0;
-}
-
-.stat-card.success .stat-value {
-    color: #16A34A;
-}
-
-.stat-card.danger .stat-value {
-    color: #DC2626;
-}
-
-.stat-subtext {
-    font-size: 0.875rem;
-    color: #6B7280;
-    margin: 0;
-}
-
-.analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.card-header {
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #E5E7EB;
-    padding-bottom: 1rem;
-}
-
-.card-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0 0 0.25rem 0;
-}
-
-.text-muted {
-    color: #6B7280 !important;
-    margin: 0;
-}
-
-.chart-wrapper {
-    height: 340px;
-    position: relative;
-}
-
-.accounts-section {
-    margin-top: 3rem;
-}
-
-.accounts-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.accounts-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0;
-}
-
-.btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    cursor: pointer;
-    text-align: center;
-}
-
-.btn-outline {
-    background: transparent;
-    border-color: #2563EB;
-    color: #2563EB;
-}
-
-.btn-outline:hover {
-    background: #2563EB;
-    color: white;
-    transform: translateY(-1px);
-}
-
-.accounts-carousel {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-
-.account-card-item {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #E5E7EB;
-}
-
-.account-card-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-}
-
-.account-type-badge {
-    background: linear-gradient(135deg, #F8FAFC 0%, rgba(37, 99, 235, 0.05) 100%);
-    color: #2563EB;
-    padding: 0.375rem 0.875rem;
-    border-radius: 99px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border: 1px solid rgba(37, 99, 235, 0.1);
-}
-
-.account-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-.account-icon {
-    font-size: 1.75rem;
-}
-
-.account-details h4 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0 0 0.25rem 0;
-}
-
-.account-details p {
-    font-size: 0.875rem;
-    color: #6B7280;
-    margin: 0;
-}
-
-.account-balance {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1F2937;
-    margin: 0.5rem 0;
-}
-
-.account-updated {
-    font-size: 0.8rem;
-    color: #6B7280;
-    margin: 0;
-}
-
-.empty-account-card {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    border: 2px dashed #E5E7EB;
-    background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
-    transition: all 0.2s ease;
-}
-
-.empty-account-card:hover {
-    border-color: #2563EB;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.02) 0%, rgba(37, 99, 235, 0.05) 100%);
-}
-
-.empty-account-content {
-    color: #6B7280;
-}
-
-.empty-account-icon {
-    font-size: 3rem;
-    margin-bottom: 0.75rem;
-    opacity: 0.4;
-}
-
-.empty-account-text {
-    font-weight: 600;
-    color: #6B7280;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .welcome-content {
-        flex-direction: column;
-        align-items: stretch;
+    /* Root Variables for Consistent Theming */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+        --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.12);
     }
-    
-    .quick-actions {
-        justify-content: center;
-    }
-    
-    .analytics-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .accounts-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .btn-outline {
+
+    /* Dashboard Main Container */
+    .dashboard-main-content {
+        padding: 2rem 0;
         width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
     }
-    
-    .stat-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .welcome-text h1 {
-        font-size: 1.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.75rem;
-    }
-}
 
-@media (max-width: 480px) {
-    .welcome-header {
-        padding: 1.5rem;
+    /* Enhanced Welcome Header with Animated Background */
+    .dashboard-welcome-header {
+        background: linear-gradient(135deg,
+                rgba(30, 58, 138, 0.95) 0%,
+                rgba(26, 46, 95, 0.98) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 28px;
+        padding: 3rem 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(30, 58, 138, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
-    .quick-actions {
+
+    .dashboard-welcome-bg-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+            radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+        animation: bgFloat 20s ease-in-out infinite;
+    }
+
+    @keyframes bgFloat {
+
+        0%,
+        100% {
+            transform: translate(0, 0);
+        }
+
+        50% {
+            transform: translate(20px, 20px);
+        }
+    }
+
+    .dashboard-welcome-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 3rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .dashboard-welcome-text {
+        flex: 1;
+    }
+
+    .dashboard-time-badge {
+        display: inline-flex;
+        align-items: center;
         gap: 0.5rem;
-    }
-    
-    .quick-action-btn {
-        padding: 0.6rem 1rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
         font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(10px);
     }
-    
-    .card {
-        padding: 1rem;
+
+    .dashboard-greeting-title {
+        color: white;
+        margin-bottom: 0.75rem;
+        font-size: 2.25rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
     }
-    
-    .stat-card {
-        padding: 1.25rem;
+
+    #greetingText {
+        background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
-}
+
+    .dashboard-user-highlight {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 900;
+    }
+
+    .dashboard-wave-emoji {
+        animation: wave 2s ease-in-out infinite;
+        display: inline-block;
+        transform-origin: 70% 70%;
+    }
+
+    @keyframes wave {
+
+        0%,
+        100% {
+            transform: rotate(0deg);
+        }
+
+        10%,
+        30% {
+            transform: rotate(-20deg);
+        }
+
+        20%,
+        40% {
+            transform: rotate(20deg);
+        }
+
+        50%,
+        100% {
+            transform: rotate(0deg);
+        }
+    }
+
+    .dashboard-date-subtitle {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 1.125rem;
+        font-weight: 500;
+    }
+
+    .dashboard-current-date {
+        font-weight: 600;
+        color: white;
+    }
+
+    /* Enhanced Quick Actions with Arrow */
+    .dashboard-quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        min-width: 320px;
+    }
+
+    .dashboard-quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1.5px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+    }
+
+    .dashboard-quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent);
+        transition: left 0.7s ease;
+    }
+
+    .dashboard-quick-action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.35);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .dashboard-quick-action-btn:hover::before {
+        left: 100%;
+    }
+
+    .dashboard-action-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-quick-action-btn:hover .dashboard-action-icon-wrapper {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .dashboard-action-label {
+        flex: 1;
+        text-align: left;
+    }
+
+    .dashboard-action-arrow {
+        font-size: 1.25rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-quick-action-btn:hover .dashboard-action-arrow {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Enhanced Stats Grid with Glow Effect */
+    .dashboard-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: var(--card-shadow);
+        padding: 2rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-glow {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .dashboard-stat-card:hover .stat-card-glow {
+        opacity: 1;
+    }
+
+    .dashboard-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        transition: opacity 0.3s ease;
+    }
+
+    .dashboard-stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .dashboard-stat-card.primary::before {
+        background: var(--primary-gradient);
+    }
+
+    .dashboard-stat-card.success::before {
+        background: var(--success-gradient);
+    }
+
+    .dashboard-stat-card.danger::before {
+        background: var(--danger-gradient);
+    }
+
+    .stat-card-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .stat-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        position: relative;
+    }
+
+    .stat-icon-pulse {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 16px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+        }
+    }
+
+    .dashboard-stat-card.primary .stat-icon-wrapper {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .dashboard-stat-card.success .stat-icon-wrapper {
+        background: rgba(11, 163, 96, 0.1);
+        color: #0ba360;
+    }
+
+    .dashboard-stat-card.danger .stat-icon-wrapper {
+        background: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+    }
+
+    .stat-body {
+        margin-bottom: 1rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+        line-height: 1;
+        transition: all 0.3s ease;
+    }
+
+    .stat-value.positive {
+        color: var(--success-600);
+    }
+
+    .stat-value.negative {
+        color: var(--danger-600);
+    }
+
+    .stat-trend {
+        margin-top: 0.75rem;
+    }
+
+    .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .trend-indicator.positive {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success-600);
+    }
+
+    .trend-indicator.neutral {
+        background: rgba(107, 114, 128, 0.1);
+        color: var(--text-muted);
+    }
+
+    /* Enhanced Analytics Grid */
+    .dashboard-analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-chart-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: var(--card-shadow);
+        padding: 2rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-chart-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .dashboard-chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .dashboard-chart-card:hover::before {
+        opacity: 1;
+    }
+
+    .chart-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-card-title {
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .chart-card-title i {
+        color: var(--primary-600);
+    }
+
+    .chart-card-subtitle {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+    }
+
+    .chart-card-period {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--background);
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+    }
+
+    .chart-live-indicator {
+        color: #22c55e;
+        font-size: 0.5rem;
+        animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    .chart-wrapper {
+        height: 300px;
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-center-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .center-label-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .center-label-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    .chart-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 2px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .chart-summary-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .summary-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .summary-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .summary-value.positive {
+        color: var(--success-600);
+    }
+
+    /* Empty State */
+    .dashboard-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+        padding: 3rem 2rem;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary-300);
+        opacity: 0.7;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-description {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .empty-state-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Enhanced Accounts Section */
+    .dashboard-accounts-section {
+        margin-top: 2rem;
+    }
+
+    .accounts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .accounts-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .accounts-title i {
+        color: var(--primary-600);
+    }
+
+    .accounts-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 0.5rem;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 14px;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+
+    .accounts-subtitle {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+    }
+
+    .dashboard-btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .dashboard-accounts-carousel {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .dashboard-account-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: var(--card-shadow);
+        padding: 1.75rem;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .account-card-shine {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.1) 45%,
+                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0.1) 55%,
+                transparent 100%);
+        transform: translateX(-100%) translateY(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .dashboard-account-card:hover .account-card-shine {
+        transform: translateX(100%) translateY(100%);
+    }
+
+    .dashboard-account-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--card-shadow-hover);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .account-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .account-type-badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-type-badge.bank {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--primary-600);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .account-type-badge.cash {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success-600);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .account-type-badge.credit {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-500);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .account-type-badge.investment {
+        background: rgba(168, 85, 247, 0.1);
+        color: #8b5cf6;
+        border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .account-edit-btn {
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.5rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .account-edit-btn:hover {
+        color: var(--primary-600);
+        background: rgba(59, 130, 246, 0.1);
+        transform: scale(1.1);
+    }
+
+    .account-card-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .account-icon-wrapper {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-account-card:hover .account-icon-wrapper {
+        transform: scale(1.05) rotate(-5deg);
+    }
+
+    .account-icon-wrapper.bank {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--primary-600);
+    }
+
+    .account-icon-wrapper.cash {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--success-600);
+    }
+
+    .account-icon-wrapper.credit {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-500);
+    }
+
+    .account-icon-wrapper.investment {
+        background: rgba(168, 85, 247, 0.1);
+        color: #8b5cf6;
+    }
+
+    .account-name {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .account-balance-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .account-balance-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+    }
+
+    .account-card-footer {
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .account-progress-bar {
+        width: 100%;
+        height: 4px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .account-progress-fill {
+        height: 100%;
+        width: 70%;
+        border-radius: 2px;
+        animation: progressLoad 1.5s ease-out;
+    }
+
+    @keyframes progressLoad {
+        from {
+            width: 0;
+        }
+    }
+
+    .account-progress-fill.bank {
+        background: var(--primary-gradient);
+    }
+
+    .account-progress-fill.cash {
+        background: var(--success-gradient);
+    }
+
+    .account-progress-fill.credit {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    }
+
+    .account-progress-fill.investment {
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    }
+
+    .account-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Empty Account Card with Pulse */
+    .dashboard-empty-account-card {
+        background: linear-gradient(135deg,
+                rgba(248, 250, 252, 0.8) 0%,
+                rgba(241, 245, 249, 0.6) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 2px dashed rgba(102, 126, 234, 0.3);
+        padding: 3rem 2rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .empty-card-pulse {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(102, 126, 234, 0.1);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .dashboard-empty-account-card:hover {
+        border-color: rgba(102, 126, 234, 0.6);
+        background: rgba(248, 250, 252, 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.1);
+    }
+
+    .empty-card-content {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    .empty-card-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-empty-account-card:hover .empty-card-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .empty-card-text h4 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .empty-card-text p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+
+        .dashboard-stats-grid,
+        .dashboard-analytics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-welcome-content {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 2rem;
+        }
+
+        .dashboard-quick-actions {
+            min-width: 100%;
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-welcome-header {
+            padding: 2rem 1.5rem;
+        }
+
+        .dashboard-greeting-title {
+            font-size: 1.75rem;
+        }
+
+        .dashboard-quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .accounts-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .dashboard-btn-add {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-quick-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        opacity: 0;
+    }
+
+    .stagger-1 {
+        animation-delay: 0.1s;
+    }
+
+    .stagger-2 {
+        animation-delay: 0.2s;
+    }
+
+    .stagger-3 {
+        animation-delay: 0.3s;
+    }
+
+    /* Tooltip */
+    [data-tooltip]::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem 0.75rem;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        font-size: 0.75rem;
+        border-radius: 8px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        pointer-events: none;
+    }
+
+    [data-tooltip]:hover::before {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-8px);
+    }
+
+    .cashflow-filter {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .cashflow-filter select {
+        padding: 0.45rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        font-weight: 600;
+        background: white;
+        cursor: pointer;
+    }
+
+    .cashflow-filter button {
+        padding: 0.45rem 0.75rem;
+        border-radius: 10px;
+        border: none;
+        background: var(--primary-gradient);
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .chart-loading {
+        opacity: 0.4;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
 </style>
 
-<!-- Welcome Header Section -->
-<div class="main-content">
-<div class="welcome-header">
-    <div class="welcome-content">
-        <div class="welcome-text">
-            <h1>Welcome back, {{ welcome_name|capfirst }}! 👋</h1>
-            <p>Financial Overview for {% now "F j, Y" %}</p>
-        </div>
-        <div class="quick-actions">
-            <a href="{% url 'add_expense' %}" class="quick-action-btn btn-expense" title="Add Expense">
-                <span class="icon">−</span>
-                <span>Add Expense</span>
-            </a>
-            <a href="{% url 'add_income' %}" class="quick-action-btn btn-income" title="Add Income">
-                <span class="icon">+</span>
-                <span>Add Income</span>
-            </a>
-            <a href="{% url 'add_account' %}" class="quick-action-btn btn-account" title="Add Account">
-                <span class="icon">🏦</span>
-                <span>Add Account</span>
-            </a>
-            <a href="{% url 'add_category' %}" class="quick-action-btn btn-category" title="Add Category">
-                <span class="icon">📁</span>
-                <span>Add Category</span>
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Financial Overview Cards -->
-<div class="stat-grid">
-    <div class="stat-card primary">
-        <div class="d-flex justify-between align-center mb-4">
-            <div class="stat-title">Net Worth</div>
-            <div class="stat-icon">💰</div>
-        </div>
-        <div class="stat-value">₹{{ user_balance }}</div>
-        <div class="stat-subtext">Total value across all accounts</div>
-    </div>
-
-    <div class="stat-card success">
-        <div class="d-flex justify-between align-center mb-4">
-            <div class="stat-title">Monthly Income</div>
-            <div class="stat-icon">📈</div>
-        </div>
-        <div class="stat-value">+₹{{ total_income }}</div>
-        <div class="stat-subtext">Total earnings this month</div>
-    </div>
-
-    <div class="stat-card danger">
-        <div class="d-flex justify-between align-center mb-4">
-            <div class="stat-title">Monthly Expenses</div>
-            <div class="stat-icon">📉</div>
-        </div>
-        <div class="stat-value">−₹{{ total_expenses }}</div>
-        <div class="stat-subtext">Total spending this month</div>
-    </div>
-</div>
-
-<!-- Analytics Section -->
-<div class="analytics-grid">
-    <!-- Cash Flow Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <h3 class="card-title">Cash Flow Analysis</h3>
-                <p class="text-muted" style="font-size: 0.875rem; margin-top: 0.25rem;">This Month</p>
-            </div>
-        </div>
-        <div class="chart-wrapper" style="height: 340px; position: relative;">
-            <canvas id="cashFlowChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Spending Breakdown Chart -->
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Spending Breakdown</h3>
-        </div>
-        <div class="chart-wrapper" style="height: 340px; position: relative;">
-            {% if total_expenses > 0 %}
-            <canvas id="expensePieChart"></canvas>
-            {% else %}
-            <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">📊</div>
-                <p class="text-muted">Add expenses to see spending breakdown</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Accounts Section -->
-<div class="accounts-section" style="margin-top: 3rem;">
-    <div class="accounts-header">
-        <h2 class="accounts-title">My Accounts</h2>
-        <a href="{% url 'add_account' %}" class="btn btn-outline">+ Add New Account</a>
-    </div>
-
-    <div class="accounts-carousel">
-        {% for account in user_accounts %}
-        <div class="account-card-item">
-            <div class="d-flex justify-between align-center mb-4">
-                <span class="account-type-badge">
-                    {{ account.get_account_type_display|upper }}
-                </span>
-            </div>
-            <div class="account-info">
-                <div class="account-icon">
-                    {% if account.account_type == 'bank' %}🏦
-                    {% elif account.account_type == 'cash' %}💵
-                    {% elif account.account_type == 'credit' %}💳
-                    {% elif account.account_type == 'investment' %}📈
-                    {% else %}💰{% endif %}
-                </div>
-                <div class="account-details">
-                    <h4>{{ account.name }}</h4>
-                    <p>Account Balance</p>
-                </div>
-            </div>
-            <div class="account-balance">₹{{ account.balance }}</div>
-            <div class="account-updated">Updated today</div>
-        </div>
-        {% empty %}
-        <div class="account-card-item empty-account-card" onclick="window.location='{% url 'add_account' %}'">
-            <div class="empty-account-content">
-                <div class="empty-account-icon">+</div>
-                <div class="empty-account-text">Add your first account</div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-</div>
-
-<!-- Chart Configuration -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Configure Chart.js defaults
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+
+    function fetchCashFlowData() {
+        const month = monthSelect.value;
+        const year = yearSelect.value;
+
+        const chartCard = document.querySelector('.dashboard-chart-card');
+        chartCard.classList.add('chart-loading');
+
+        fetch(`/dashboard/live-data/?month=${month}&year=${year}`)
+            .then(res => res.json())
+            .then(data => {
+                // Update chart
+                cashFlowChart.data.datasets[0].data = [data.total_income];
+                cashFlowChart.data.datasets[1].data = [data.total_expenses];
+                cashFlowChart.data.labels = [`${month}/${year}`];
+                cashFlowChart.update();
+
+                // Update Net Cash Flow
+                document.querySelector('.summary-value.positive').innerText =
+                    '₹' + data.net_cash_flow.toLocaleString();
+
+                // Update savings rate
+                const rateEl = document.getElementById('savingsRate');
+                if (data.total_income > 0) {
+                    const rate = ((data.total_income - data.total_expenses) / data.total_income * 100).toFixed(1);
+                    rateEl.innerText = rate + '%';
+                } else {
+                    rateEl.innerText = '0%';
+                }
+            })
+            .finally(() => {
+                chartCard.classList.remove('chart-loading');
+            });
+    }
+
+    monthSelect.addEventListener('change', fetchCashFlowData);
+    yearSelect.addEventListener('change', fetchCashFlowData);
+</script>
+
+<script>
+    // Real-time Clock and Greeting
+    function updateTimeAndGreeting() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+
+        const timeEl = document.getElementById('currentTime');
+        if (timeEl) {
+            timeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        let greeting = 'Good Evening';
+        if (hours < 12) greeting = 'Good Morning';
+        else if (hours < 18) greeting = 'Good Afternoon';
+
+        const greetingEl = document.getElementById('greetingText');
+        if (greetingEl) {
+            greetingEl.textContent = greeting;
+        }
+    }
+
+    setInterval(updateTimeAndGreeting, 1000);
+    updateTimeAndGreeting();
+
+    // Counter Animation for Stats
+    function animateCounter(element) {
+        const target = parseFloat(element.getAttribute('data-target'));
+        const isNegative = element.classList.contains('negative');
+        const prefix = isNegative ? '−₹' : element.classList.contains('positive') ? '+₹' : '₹';
+        const duration = 2000;
+        const steps = 60;
+        const increment = target / steps;
+        let current = 0;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = prefix + Math.floor(current).toLocaleString();
+        }, duration / steps);
+    }
+
+    // Calculate Savings Rate
+    function calculateSavingsRate() {
+        const income = parseFloat("{{ total_income|stringformat:'.2f' }}");
+        const expenses = parseFloat("{{ total_expenses|stringformat:'.2f' }}");
+
+        if (income > 0) {
+            const rate = ((income - expenses) / income * 100).toFixed(1);
+            const el = document.getElementById('savingsRate');
+            if (el) {
+                el.textContent = rate + '%';
+                el.classList.toggle('positive', rate > 0);
+            }
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animate all stat values
+        document.querySelectorAll('.stat-value[data-target]').forEach(el => {
+            animateCounter(el);
+        });
+
+        // Calculate savings rate
+        calculateSavingsRate();
+
+        // Add ripple effect to buttons
+        document.querySelectorAll('.dashboard-quick-action-btn, .dashboard-btn-add').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.4);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                `;
+
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+    });
+
+    // Chart.js Configuration
     Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.color = '#6B7280';
-    Chart.defaults.plugins.legend.labels.usePointStyle = true;
-    Chart.defaults.plugins.legend.labels.padding = 20;
 
-    // Pie Chart Configuration
+    // Enhanced Pie Chart
     {% if total_expenses > 0 %}
     const pieCtx = document.getElementById('expensePieChart').getContext('2d');
-    const pieLabels = {{ pie_labels| safe }};
-    const pieData = {{ pie_data| safe }};
-
     new Chart(pieCtx, {
         type: 'doughnut',
         data: {
-            labels: pieLabels,
-            datasets: [{
-                data: pieData,
-                backgroundColor: [
-                    '#2563EB', '#16A34A', '#F59E0B',
-                    '#DC2626', '#7C3AED', '#EC4899',
-                    '#0891B2', '#9333EA', '#DB2777'
-                ],
-                borderWidth: 0,
-                hoverOffset: 15,
-                borderRadius: 6,
-                spacing: 2
+            labels: {{ pie_labels| safe }},
+        datasets: [{
+            data: {{ pie_data| safe }},
+        backgroundColor: [
+            '#2563EB', '#16A34A', '#F59E0B', '#DC2626',
+            '#7C3AED', '#EC4899', '#0891B2', '#10B981',
+            '#8B5CF6', '#EF4444', '#3B82F6', '#06B6D4'
+        ],
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverOffset: 25,
+        borderRadius: 8
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        font: { size: 12, weight: 500 },
-                        color: '#1F2937',
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 25
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                    padding: 12,
-                    cornerRadius: 8,
-                    titleFont: { size: 13, weight: 600 },
-                    bodyFont: { size: 13 },
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function (context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = Math.round((value / total) * 100);
-                            return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
-                        }
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    boxWidth: 8,
+                    font: { size: 11, weight: '500' }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(31, 41, 55, 0.98)',
+                padding: 12,
+                cornerRadius: 12,
+                callbacks: {
+                    label: ctx => {
+                        const val = ctx.raw;
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = (val / total * 100).toFixed(1);
+                        return ` ${ctx.label}: ₹${val.toLocaleString()} (${pct}%)`;
                     }
                 }
             }
+        },
+        animation: {
+            animateScale: true,
+            animateRotate: true,
+            duration: 1200,
+            easing: 'easeOutQuart'
         }
+    }
     });
     {% endif %}
 
-    // Bar Chart Configuration
+    // Enhanced Bar Chart
     const barCtx = document.getElementById('cashFlowChart').getContext('2d');
-    new Chart(barCtx, {
+    const cashFlowChart = new Chart(barCtx, {
         type: 'bar',
         data: {
-            labels: ['Income vs Expenses'],
-            datasets: [
-                {
-                    label: 'Income',
-                    data: [{{ total_income }}],
-                    backgroundColor: '#16A34A',
-                    borderRadius: 8,
-                    barPercentage: 0.6,
-                    categoryPercentage: 0.8
-                },
-                {
-                    label: 'Expenses',
-                    data: [{{ total_expenses }}],
-                    backgroundColor: '#DC2626',
-                    borderRadius: 8,
-                    barPercentage: 0.6,
-                    categoryPercentage: 0.8
-                }
-            ]
+            labels: ['{{ selected_month }}/{{ selected_year }}'],
+            datasets: [{
+                label: 'Income',
+                data: [parseFloat("{{ total_income|stringformat:'.2f' }}")],
+                backgroundColor: 'rgba(22, 163, 74, 0.85)',
+                borderColor: '#16a34a',
+                borderWidth: 2,
+                borderRadius: 12,
+                borderSkipped: false
+            }, {
+                label: 'Expenses',
+                data: [parseFloat("{{ total_expenses|stringformat:'.2f' }}")],
+                backgroundColor: 'rgba(220, 38, 38, 0.85)',
+                borderColor: '#dc2626',
+                borderWidth: 2,
+                borderRadius: 12,
+                borderSkipped: false
+            }]
         },
         options: {
             responsive: true,
@@ -620,23 +1679,19 @@
                     position: 'top',
                     align: 'end',
                     labels: {
-                        font: { size: 13, weight: 500 },
-                        padding: 25,
-                        usePointStyle: true
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'rectRounded',
+                        boxWidth: 12,
+                        font: { size: 12, weight: '600' }
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(31, 41, 55, 0.9)',
-                    padding: 14,
-                    cornerRadius: 8,
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    borderWidth: 1,
+                    backgroundColor: 'rgba(31, 41, 55, 0.98)',
+                    padding: 12,
+                    cornerRadius: 12,
                     callbacks: {
-                        label: function (context) {
-                            const label = context.dataset.label;
-                            const value = context.raw.toLocaleString();
-                            return `${label}: ₹${value}`;
-                        }
+                        label: ctx => ` ${ctx.dataset.label}: ₹${ctx.raw.toLocaleString()}`
                     }
                 }
             },
@@ -644,32 +1699,40 @@
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: '#F1F5F9',
-                        drawBorder: false,
-                        borderDash: [4, 4]
+                        color: 'rgba(241, 245, 249, 0.6)',
+                        borderDash: [4, 4],
+                        drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        padding: 12,
-                        font: { size: 12, weight: 500 },
-                        callback: function (value) {
-                            return '₹' + value.toLocaleString();
-                        }
+                        callback: v => '₹' + v,
+                        padding: 10,
+                        font: { size: 11, weight: '500' }
                     }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: {
-                        padding: 20,
-                        font: { size: 13, weight: 600 }
-                    }
+                    border: { display: false },
+                    ticks: { font: { size: 12, weight: '600' } }
                 }
             },
             animation: {
-                duration: 1000,
+                duration: 1200,
                 easing: 'easeOutQuart'
             }
         }
     });
+
+    // Ripple animation style
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 {% endblock %}
-

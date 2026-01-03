@@ -8,478 +8,1058 @@
     <meta name="description" content="Money Manager - Your personal finance dashboard">
     <meta name="theme-color" content="#1E3A8A">
     <title>Money Manager - Personal Finance Dashboard</title>
+
+    <!-- Premium CSS Framework -->
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Premium UI Enhancements -->
     <style>
-        /* Mobile Navigation Overrides */
-        .nav-content {
-            position: relative;
+        :root {
+            /* Enhanced Color System */
+            --mm-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --mm-gradient-success: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+            --mm-gradient-danger: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --mm-gradient-warning: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --mm-gradient-dark: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+
+            /* Glassmorphism Variables */
+            --mm-glass-bg: rgba(255, 255, 255, 0.05);
+            --mm-glass-border: rgba(255, 255, 255, 0.1);
+            --mm-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+            /* Depth Shadows */
+            --mm-shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --mm-shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --mm-shadow-hard: 0 15px 50px rgba(0, 0, 0, 0.2);
+
+            /* Animation Speeds */
+            --mm-transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --mm-transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
-        /* Mobile Menu Toggle Button - Hidden on desktop by default */
-        .mobile-menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            flex-direction: column;
+        /* Premium Base Enhancements */
+        .mm-body {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .mm-body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Premium Navigation - Glassmorphism Design */
+        .mm-navbar {
+            background: linear-gradient(135deg,
+                    rgba(30, 58, 138, 0.95) 0%,
+                    rgba(26, 46, 95, 0.98) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow:
+                0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .mm-nav-content {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            height: 72px;
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* Premium Branding */
+        .mm-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+            padding: 8px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: var(--mm-transition-smooth);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .mm-brand::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .mm-brand:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .mm-brand:hover::before {
+            left: 100%;
+        }
+
+        .mm-brand-icon {
+            font-size: 1.8rem;
+        }
+
+        .mm-brand:hover .mm-brand-icon {
+            animation: mm-pulse-subtle 2s infinite;
+        }
+
+        @keyframes mm-pulse-subtle {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Premium Navigation Links - Desktop */
+        .mm-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mm-nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 12px 20px;
+            border-radius: 14px;
+            transition: var(--mm-transition-smooth);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .mm-nav-link::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .mm-nav-link:hover::before {
+            width: 150%;
+            height: 150%;
+        }
+
+        .mm-nav-link:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mm-nav-link.mm-active {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+            color: white;
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .mm-nav-link-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Premium Logout Button */
+        .mm-logout-form {
+            margin-left: 8px;
+        }
+
+        .mm-logout-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--mm-transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mm-logout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .mm-logout-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .mm-logout-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Mobile Menu Toggle */
+        .mm-mobile-toggle {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            padding: 12px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
             width: 48px;
             height: 48px;
             z-index: 1002;
-            border-radius: var(--radius-md);
-            transition: var(--transition-base);
+            border-radius: 12px;
+            transition: var(--mm-transition-smooth);
+            position: relative;
         }
 
-        .mobile-menu-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.15);
+        .mm-mobile-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
         }
 
-        .mobile-menu-toggle span {
+        .mm-mobile-toggle-bar {
             display: block;
             width: 24px;
-            height: 2px;
+            height: 3px;
             background-color: white;
-            border-radius: 2px;
-            transition: var(--transition-base);
-            position: relative;
-            left: 50%;
-            transform: translateX(-50%);
+            border-radius: 3px;
+            transition: var(--mm-transition-smooth);
         }
 
-        .mobile-menu-toggle span:nth-child(1) {
-            top: 0;
-        }
-
-        .mobile-menu-toggle span:nth-child(2) {
-            opacity: 1;
-        }
-
-        .mobile-menu-toggle span:nth-child(3) {
-            bottom: 0;
-        }
-
-        /* Mobile Menu Overlay - Hidden on desktop */
-        .mobile-menu-overlay {
+        /* Mobile Menu Overlay */
+        .mm-mobile-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.75);
             z-index: 999;
             opacity: 0;
-            transition: opacity var(--transition-base);
-            backdrop-filter: blur(2px);
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
-        /* Responsive Navigation - Mobile Only */
-        @media (max-width: 768px) {
+        .mm-mobile-overlay.mm-active {
+            opacity: 1;
+            visibility: visible;
+        }
 
-            /* Show mobile menu toggle ONLY on mobile */
-            .mobile-menu-toggle {
-                display: flex;
-            }
+        /* Premium Main Content */
+        .mm-main-content {
+            padding: 40px 0;
+            animation: mm-fadeInUp 0.8s ease-out;
+        }
 
-            /* Transform hamburger to X when active */
-            .mobile-menu-toggle.active span:nth-child(1) {
-                transform: translateX(-50%) rotate(45deg) translate(5px, 5px);
-                background-color: white;
-            }
-
-            .mobile-menu-toggle.active span:nth-child(2) {
+        @keyframes mm-fadeInUp {
+            from {
                 opacity: 0;
-                transform: translateX(-50%);
+                transform: translateY(30px);
             }
 
-            .mobile-menu-toggle.active span:nth-child(3) {
-                transform: translateX(-50%) rotate(-45deg) translate(5px, -5px);
-                background-color: white;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Layout Container */
+        .mm-layout-container {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 0 32px;
+        }
+
+        /* Full-width container for dashboard */
+        .mm-dashboard-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+
+        /* Premium Cards */
+        .mm-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow:
+                var(--mm-shadow-soft),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            padding: 32px;
+            transition: var(--mm-transition-smooth);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .mm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--mm-gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mm-card:hover::before {
+            opacity: 1;
+        }
+
+        .mm-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--mm-shadow-hard);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        /* Dashboard Grid System */
+        .mm-dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Metric Cards */
+        .mm-metrics-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .mm-metric-card {
+            grid-column: span 1;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 240px;
+        }
+
+        /* Analytics Row */
+        .mm-analytics-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .mm-chart-card {
+            grid-column: span 1;
+            padding: 32px;
+            min-height: 400px;
+        }
+
+        /* Activity Row */
+        .mm-activity-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        /* Welcome Header */
+        .mm-welcome-header {
+            grid-column: 1 / -1;
+            background: var(--mm-gradient-dark);
+            border-radius: 28px;
+            padding: 48px;
+            margin-bottom: 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--mm-shadow-hard);
+            width: 100%;
+        }
+
+        .mm-welcome-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .mm-welcome-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .mm-welcome-text h1 {
+            color: white;
+            margin-bottom: 12px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mm-quick-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .mm-quick-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 28px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
+            border-radius: 18px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--mm-transition-smooth);
+            cursor: pointer;
+            min-width: 180px;
+            text-decoration: none;
+        }
+
+        .mm-quick-action-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Chart Enhancements */
+        .mm-chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .mm-chart-visual {
+            width: 100%;
+            height: 100%;
+            padding: 20px 0;
+        }
+
+        .mm-cash-flow-chart {
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 20px;
+            height: 100%;
+            width: 100%;
+        }
+
+        .mm-chart-bars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 20px;
+            align-items: end;
+            height: 100%;
+        }
+
+        /* Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #654a8e 100%);
+        }
+
+        /* Premium Focus States */
+        :focus-visible {
+            outline: 3px solid #667eea;
+            outline-offset: 3px;
+            border-radius: 12px;
+        }
+
+        /* ==================================
+           RESPONSIVE DESIGN - MOBILE
+           ================================== */
+
+        /* Tablet Adjustments */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .mm-layout-container {
+                padding: 0 24px;
             }
 
-            /* Mobile menu styles - Hide desktop nav links by default on mobile */
-            .nav-links {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                width: 85%;
-                max-width: 320px;
-                height: 100vh;
-                background: linear-gradient(135deg, var(--primary-900) 0%, #1a2e5f 100%);
+            .mm-metrics-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .mm-analytics-row {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .mm-activity-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .mm-welcome-header {
+                padding: 40px 32px;
+            }
+
+            .mm-welcome-content {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 5rem 1.5rem 2rem;
-                box-shadow: var(--shadow-xl);
-                transition: right var(--transition-base);
-                z-index: 1000;
-                gap: 0;
-                overflow-y: auto;
-                border-left: 1px solid rgba(255, 255, 255, 0.1);
+                gap: 32px;
             }
 
-            .nav-links.active {
-                right: 0;
+            .mm-quick-actions {
+                justify-content: center;
             }
 
-            /* Mobile menu items */
-            .nav-links .nav-link {
-                display: flex;
-                align-items: center;
-                padding: 1rem 1.25rem;
-                margin: 0.25rem 0;
-                border-radius: var(--radius-lg);
-                color: rgba(255, 255, 255, 0.9);
-                font-weight: 600;
-                transition: var(--transition-base);
-                font-size: 1rem;
-                border: 1.5px solid transparent;
-                gap: 0.75rem;
-            }
-
-            .nav-links .nav-link::before {
-                content: '';
-                width: 6px;
-                height: 6px;
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.3);
-            }
-
-            .nav-links .nav-link:hover {
-                background-color: rgba(255, 255, 255, 0.15);
-                color: white;
-                border-color: rgba(255, 255, 255, 0.2);
-                transform: translateX(4px);
-            }
-
-            .nav-links .nav-link.active {
-                background-color: rgba(255, 255, 255, 0.2);
-                color: white;
-                border: 1.5px solid rgba(255, 255, 255, 0.3);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            }
-
-            .nav-links .nav-link.active::before {
-                background-color: white;
-            }
-
-            .nav-links .nav-link.active::after {
-                display: none;
-            }
-
-            /* Logout form in mobile menu */
-            .nav-links .logout-form {
-                margin-top: 2rem;
-                padding-top: 2rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.15);
-            }
-
-            .nav-links .logout-btn {
-                width: 100%;
-                padding: 1rem 1.5rem;
-                font-size: 1rem;
-                font-weight: 600;
-                background: rgba(255, 255, 255, 0.1);
-                border: 1.5px solid rgba(255, 255, 255, 0.25);
-                color: white;
-                border-radius: var(--radius-lg);
-                transition: var(--transition-base);
-            }
-
-            .nav-links .logout-btn:hover {
-                background: rgba(255, 255, 255, 0.2);
-                border-color: rgba(255, 255, 255, 0.35);
-                transform: translateY(-2px);
-                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-            }
-
-            /* Show overlay when menu is active */
-            .mobile-menu-overlay.active {
-                display: block;
-                opacity: 1;
-            }
-
-            /* Adjust brand for mobile */
-            .brand {
-                font-size: 1.1rem;
-            }
-
-            .brand span:first-child {
-                font-size: 1.3rem;
-            }
-
-            /* Hide regular desktop nav links on mobile (they'll be in sidebar) */
-            .nav-links:not(.active) {
-                display: none;
+            .mm-quick-action-btn {
+                flex: 1;
+                min-width: 0;
             }
         }
 
-        /* Desktop Styles - Only show these on larger screens */
-        @media (min-width: 769px) {
+        /* Large Desktop Screens */
+        @media (min-width: 1440px) {
+            .mm-layout-container {
+                padding: 0 48px;
+            }
 
-            /* Hide mobile toggle and overlay on desktop */
-            .mobile-menu-toggle,
-            .mobile-menu-overlay {
+            .mm-metrics-row {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 32px;
+            }
+
+            .mm-analytics-row {
+                grid-template-columns: 2fr 1fr;
+                gap: 32px;
+            }
+
+            .mm-activity-row {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 32px;
+            }
+
+            .mm-welcome-header {
+                padding: 56px 48px;
+            }
+
+            .mm-welcome-text h1 {
+                font-size: 2.75rem;
+            }
+
+            .mm-quick-action-btn {
+                min-width: 200px;
+                padding: 20px 32px;
+            }
+        }
+
+        /* Extra Large Screens */
+        @media (min-width: 1920px) {
+            .mm-layout-container {
+                padding: 0 64px;
+            }
+
+            .mm-metrics-row {
+                gap: 40px;
+            }
+
+            .mm-analytics-row {
+                gap: 40px;
+            }
+
+            .mm-activity-row {
+                gap: 40px;
+            }
+
+            .mm-welcome-header {
+                padding: 64px 56px;
+            }
+
+            .mm-welcome-text h1 {
+                font-size: 3rem;
+            }
+
+            .mm-card {
+                padding: 40px;
+            }
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .mm-layout-container {
+                padding: 0 20px;
+            }
+
+            .mm-nav-content {
+                padding: 0 20px;
+            }
+
+            /* Show mobile toggle */
+            .mm-mobile-toggle {
+                display: flex;
+            }
+
+            /* Show overlay */
+            .mm-mobile-overlay {
+                display: block;
+            }
+
+            /* Mobile Navigation Drawer - COMPLETELY HIDDEN BY DEFAULT */
+            .mm-nav-links {
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 320px !important;
+                max-width: 85vw !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                background: linear-gradient(135deg,
+                        rgba(30, 58, 138, 0.98) 0%,
+                        rgba(26, 46, 95, 0.98) 100%) !important;
+                backdrop-filter: blur(30px) !important;
+                -webkit-backdrop-filter: blur(30px) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+                padding: 96px 24px 32px !important;
+                margin: 0 !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 0 !important;
+                box-shadow: -16px 0 40px rgba(0, 0, 0, 0.45) !important;
+                transform: translateX(100%) !important;
+                transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0s linear 0.45s !important;
+                z-index: 1001 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+
+            .mm-nav-links.mm-active {
+                transform: translateX(0) !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, visibility 0s linear 0s !important;
+            }
+
+            .mm-nav-link {
+                display: flex !important;
+                align-items: center !important;
+                gap: 16px !important;
+                padding: 18px 22px !important;
+                margin: 4px 0 !important;
+                border-radius: 16px !important;
+                font-size: 1.05rem !important;
+                font-weight: 600 !important;
+                color: rgba(255, 255, 255, 0.92) !important;
+                border: 2px solid transparent !important;
+                background: transparent !important;
+                transition: all 0.35s ease !important;
+                width: 100% !important;
+                text-align: left !important;
+            }
+
+            .mm-nav-link::before {
                 display: none !important;
             }
 
-            /* Show desktop nav links */
-            .nav-links {
+            .mm-nav-link:hover {
+                background: rgba(255, 255, 255, 0.15) !important;
+                border-color: rgba(255, 255, 255, 0.3) !important;
+                transform: translateX(6px) !important;
+                color: #fff !important;
+            }
+
+            .mm-nav-link.mm-active {
+                background: linear-gradient(135deg,
+                        rgba(255, 255, 255, 0.28) 0%,
+                        rgba(255, 255, 255, 0.15) 100%) !important;
+                border-color: rgba(255, 255, 255, 0.4) !important;
+                box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25) !important;
+                color: #fff !important;
+            }
+
+            .mm-logout-form {
+                margin-top: 16px !important;
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+
+            .mm-logout-btn {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 18px 24px !important;
+                font-size: 1.05rem !important;
+            }
+
+            .mm-brand {
+                font-size: 1.1rem !important;
+                padding: 8px 12px !important;
+            }
+
+            .mm-brand-icon {
+                font-size: 1.3rem !important;
+            }
+
+            /* Mobile Dashboard Layout */
+            .mm-dashboard-grid,
+            .mm-metrics-row,
+            .mm-analytics-row,
+            .mm-activity-row {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .mm-welcome-header {
+                padding: 32px 24px;
+            }
+
+            .mm-welcome-content {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .mm-welcome-text h1 {
+                font-size: 2rem;
+            }
+
+            .mm-quick-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .mm-quick-action-btn {
+                width: 100%;
+                justify-content: center;
+                min-width: 0;
+            }
+
+            .mm-card {
+                padding: 24px;
+            }
+
+            .mm-metric-card {
+                min-height: 180px;
+                padding: 24px;
+            }
+
+            .mm-chart-card {
+                min-height: 350px;
+                padding: 24px;
+            }
+        }
+
+        /* Desktop - Ensure proper display */
+        @media (min-width: 769px) {
+
+            .mm-mobile-toggle,
+            .mm-mobile-overlay {
+                display: none !important;
+            }
+
+            .mm-nav-links {
                 display: flex !important;
                 position: static !important;
                 flex-direction: row !important;
                 width: auto !important;
                 height: auto !important;
-                background: transparent !important;
-                padding: 0 !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                padding: 8px !important;
                 box-shadow: none !important;
                 overflow: visible !important;
-                border: none !important;
-            }
-
-            .nav-links .nav-link {
-                display: inline-flex !important;
-                padding: 0.625rem 1rem !important;
-                font-size: 0.95rem !important;
-                color: rgba(255, 255, 255, 0.75) !important;
-                border: none !important;
-                margin: 0 !important;
-            }
-
-            .nav-links .nav-link::before {
-                display: none !important;
-            }
-
-            .nav-links .nav-link:hover {
-                color: white !important;
-                background-color: rgba(255, 255, 255, 0.15) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 transform: none !important;
-            }
-
-            .nav-links .nav-link.active {
-                color: white !important;
-                background-color: rgba(255, 255, 255, 0.2) !important;
-                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3) !important;
-                border: none !important;
-            }
-
-            .nav-links .logout-form {
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-                border-top: none !important;
-                margin-left: 0.5rem !important;
-            }
-
-            .nav-links .logout-btn {
-                width: auto !important;
-                padding: 0.5rem 1rem !important;
-                font-size: 0.9rem !important;
-                background: transparent !important;
-                border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
-            }
-
-            .nav-links .logout-btn:hover {
-                background: rgba(255, 255, 255, 0.15) !important;
-                border-color: rgba(255, 255, 255, 0.5) !important;
-            }
-        }
-
-        /* Desktop Base Styles */
-        .nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 4rem;
-            position: relative;
-        }
-
-        .brand {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            letter-spacing: -0.5px;
-            z-index: 1;
-        }
-
-        .brand:hover {
-            color: white;
-            opacity: 0.9;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            z-index: 1;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.75);
-            font-weight: 500;
-            font-size: 0.95rem;
-            padding: 0.625rem 1rem;
-            border-radius: var(--radius-md);
-            transition: var(--transition-base);
-            position: relative;
-        }
-
-        .nav-link:hover {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .nav-link.active {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.2);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-        }
-
-        .logout-form {
-            display: flex;
-            align-items: center;
-            margin-left: 0.5rem;
-        }
-
-        .logout-btn {
-            background: transparent;
-            border: 1.5px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: var(--transition-base);
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-1px);
-        }
-
-        /* Tablet adjustments */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .nav-links {
-                gap: 0.5rem;
-            }
-
-            .nav-link {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.9rem;
-            }
-
-            .logout-btn {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Small mobile devices */
-        @media (max-width: 480px) {
-            .nav-links {
-                width: 90%;
-                padding: 4.5rem 1.25rem 2rem;
-            }
-
-            .nav-links .nav-link {
-                padding: 0.875rem 1rem;
-                font-size: 0.95rem;
-            }
-
-            .nav-links .logout-btn {
-                padding: 0.875rem 1.25rem;
-            }
-
-            .brand {
-                font-size: 1rem;
-            }
-
-            .brand span:first-child {
-                font-size: 1.2rem;
             }
         }
     </style>
 </head>
 
-<body>
-    <nav role="navigation" aria-label="Main navigation">
-        <div class="layout-container nav-content">
-            <a href="/dashboard/" class="brand" aria-label="Money Manager Home">
-                <span>💰</span>
+<body class="mm-body">
+    <!-- Premium Navigation -->
+    <nav class="mm-navbar" role="navigation" aria-label="Main navigation">
+        <div class="mm-nav-content">
+            <a href="/dashboard/" class="mm-brand" aria-label="Money Manager Home">
+                <span class="mm-brand-icon">💰</span>
                 <span>Money Manager</span>
             </a>
             {% if user.is_authenticated %}
-            <button class="mobile-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
-                <span></span>
-                <span></span>
-                <span></span>
+            <button class="mm-mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="mm-mobile-toggle-bar"></span>
+                <span class="mm-mobile-toggle-bar"></span>
+                <span class="mm-mobile-toggle-bar"></span>
             </button>
-            <div class="nav-links" role="menubar">
-                <a href="/dashboard/" class="nav-link" role="menuitem">Dashboard</a>
-                <a href="{% url 'transactions' %}" class="nav-link" role="menuitem">Transactions</a>
-                <a href="{% url 'manage_accounts' %}" class="nav-link" role="menuitem">Accounts</a>
-                <a href="{% url 'couple_view' %}" class="nav-link" role="menuitem">Couple</a>
+            <div class="mm-nav-links" role="menubar">
+                <a href="/dashboard/" class="mm-nav-link" role="menuitem">
+                    <i class="fas fa-chart-line mm-nav-link-icon"></i>
+                    Dashboard
+                </a>
+                <a href="{% url 'transactions' %}" class="mm-nav-link" role="menuitem">
+                    <i class="fas fa-exchange-alt mm-nav-link-icon"></i>
+                    Transactions
+                </a>
+                <a href="{% url 'budget_list' %}" class="mm-nav-link" role="menuitem">
+                    <i class="fas fa-chart-pie mm-nav-link-icon"></i>
+                    Budgets
+                </a>
+                <a href="{% url 'manage_accounts' %}" class="mm-nav-link" role="menuitem">
+                    <i class="fas fa-wallet mm-nav-link-icon"></i>
+                    Accounts
+                </a>
+                <a href="{% url 'shared_view' %}" class="mm-nav-link" role="menuitem">
+                    <i class="fas fa-users mm-nav-link-icon"></i>
+                    Shared Hub
+                </a>
 
-                <form action="{% url 'logout' %}" method="post" class="logout-form">
+                <form action="{% url 'logout' %}" method="post" class="mm-logout-form">
                     {% csrf_token %}
-                    <button type="submit" class="logout-btn" aria-label="Logout from account">Logout</button>
+                    <button type="submit" class="mm-logout-btn" aria-label="Logout from account">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
                 </form>
             </div>
-            <div class="mobile-menu-overlay"></div>
+            <div class="mm-mobile-overlay"></div>
             {% endif %}
         </div>
     </nav>
 
-    <main class="layout-container" role="main">
+    <!-- Premium Main Content -->
+    <main class="mm-main-content mm-layout-container" role="main">
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Premium JavaScript Enhancements -->
     <script>
-        // Add active state to current page
+        // Enhanced Navigation Activation
         document.addEventListener('DOMContentLoaded', function () {
             const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-links a.nav-link');
+            const navLinks = document.querySelectorAll('.mm-nav-links a.mm-nav-link');
 
             navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
+                const href = link.getAttribute('href');
+                if (href === currentPath ||
+                    (currentPath.includes(href) && href !== '/dashboard/')) {
+                    link.classList.add('mm-active');
                 } else {
-                    link.classList.remove('active');
+                    link.classList.remove('mm-active');
                 }
             });
         });
 
-        // Enhance logout button confirmation
+        // Premium Logout Confirmation
         document.addEventListener('DOMContentLoaded', function () {
-            const logoutForm = document.querySelector('.logout-form');
+            const logoutForm = document.querySelector('.mm-logout-form');
             if (logoutForm) {
                 logoutForm.addEventListener('submit', function (e) {
-                    if (!confirm('Are you sure you want to log out?')) {
-                        e.preventDefault();
-                    }
+                    e.preventDefault();
+
+                    const confirmDialog = document.createElement('div');
+                    confirmDialog.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        backdrop-filter: blur(10px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 2000;
+                        opacity: 0;
+                        animation: mm-dialog-fadeIn 0.3s ease forwards;
+                    `;
+
+                    confirmDialog.innerHTML = `
+                        <div style="
+                            background: white;
+                            border-radius: 24px;
+                            padding: 40px;
+                            max-width: 400px;
+                            width: 90%;
+                            text-align: center;
+                            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+                            transform: translateY(20px);
+                            animation: mm-dialog-slideUp 0.4s ease forwards;
+                        ">
+                            <i class="fas fa-sign-out-alt" style="
+                                font-size: 3rem;
+                                color: #667eea;
+                                margin-bottom: 20px;
+                            "></i>
+                            <h3 style="margin-bottom: 16px; color: #1e293b; font-family: 'Inter', sans-serif;">Confirm Logout</h3>
+                            <p style="margin-bottom: 32px; color: #64748b; font-family: 'Inter', sans-serif;">
+                                Are you sure you want to log out? You'll need to sign in again to access your dashboard.
+                            </p>
+                            <div style="display: flex; gap: 16px; justify-content: center;">
+                                <button id="mm-cancel-logout" style="
+                                    padding: 12px 32px;
+                                    border: 2px solid #e2e8f0;
+                                    background: transparent;
+                                    color: #64748b;
+                                    border-radius: 16px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    font-family: 'Inter', sans-serif;
+                                ">Cancel</button>
+                                <button id="mm-confirm-logout" style="
+                                    padding: 12px 32px;
+                                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 16px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    font-family: 'Inter', sans-serif;
+                                ">Logout</button>
+                            </div>
+                        </div>
+                    `;
+
+                    document.body.appendChild(confirmDialog);
+
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        @keyframes mm-dialog-fadeIn {
+                            to { opacity: 1; }
+                        }
+                        @keyframes mm-dialog-slideUp {
+                            to { transform: translateY(0); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+
+                    document.getElementById('mm-cancel-logout').addEventListener('click', () => {
+                        confirmDialog.style.animation = 'mm-dialog-fadeIn 0.3s ease reverse forwards';
+                        setTimeout(() => confirmDialog.remove(), 300);
+                    });
+
+                    document.getElementById('mm-confirm-logout').addEventListener('click', () => {
+                        logoutForm.submit();
+                    });
                 });
             }
         });
 
-        // Mobile Menu Functionality
+        // Premium Mobile Menu
         document.addEventListener('DOMContentLoaded', function () {
-            const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-            const navLinks = document.querySelector('.nav-links');
-            const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+            const mobileMenuToggle = document.querySelector('.mm-mobile-toggle');
+            const navLinks = document.querySelector('.mm-nav-links');
+            const mobileMenuOverlay = document.querySelector('.mm-mobile-overlay');
 
             if (mobileMenuToggle && navLinks && mobileMenuOverlay) {
-                // Only add mobile functionality if we're on mobile
                 function isMobileView() {
                     return window.innerWidth <= 768;
                 }
 
-                // Toggle mobile menu
-                function toggleMobileMenu() {
+                function toggleMobileMenu(e) {
+                    if (e) e.preventDefault();
                     if (!isMobileView()) return;
 
                     const isExpanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
@@ -492,29 +1072,31 @@
                 }
 
                 function openMobileMenu() {
-                    mobileMenuToggle.classList.add('active');
+                    console.log('Opening mobile menu'); // Debug log
+                    mobileMenuToggle.classList.add('mm-active');
                     mobileMenuToggle.setAttribute('aria-expanded', 'true');
-                    navLinks.classList.add('active');
-                    mobileMenuOverlay.classList.add('active');
+                    navLinks.classList.add('mm-active');
+                    mobileMenuOverlay.classList.add('mm-active');
                     document.body.style.overflow = 'hidden';
-                    // Add focus trap
-                    document.addEventListener('keydown', trapFocus);
+                    document.addEventListener('keydown', handleKeyPress);
                 }
 
                 function closeMobileMenu() {
-                    mobileMenuToggle.classList.remove('active');
+                    console.log('Closing mobile menu'); // Debug log
+                    mobileMenuToggle.classList.remove('mm-active');
                     mobileMenuToggle.setAttribute('aria-expanded', 'false');
-                    navLinks.classList.remove('active');
-                    mobileMenuOverlay.classList.remove('active');
+                    navLinks.classList.remove('mm-active');
+                    mobileMenuOverlay.classList.remove('mm-active');
                     document.body.style.overflow = '';
-                    // Remove focus trap
-                    document.removeEventListener('keydown', trapFocus);
-                    // Focus back to toggle button
-                    mobileMenuToggle.focus();
+                    document.removeEventListener('keydown', handleKeyPress);
                 }
 
-                // Focus trap for accessibility
-                function trapFocus(e) {
+                function handleKeyPress(e) {
+                    if (e.key === 'Escape') {
+                        closeMobileMenu();
+                        return;
+                    }
+
                     if (e.key === 'Tab') {
                         const focusableElements = navLinks.querySelectorAll(
                             'a[href], button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
@@ -523,13 +1105,11 @@
                         const lastElement = focusableElements[focusableElements.length - 1];
 
                         if (e.shiftKey) {
-                            // Shift + Tab
                             if (document.activeElement === firstElement) {
                                 lastElement.focus();
                                 e.preventDefault();
                             }
                         } else {
-                            // Tab
                             if (document.activeElement === lastElement) {
                                 firstElement.focus();
                                 e.preventDefault();
@@ -538,47 +1118,91 @@
                     }
                 }
 
-                // Event Listeners - only add if mobile view
-                if (isMobileView()) {
-                    mobileMenuToggle.addEventListener('click', toggleMobileMenu);
-                    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+                // Click event on hamburger button
+                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
 
-                    // Close menu when clicking on links
-                    navLinks.querySelectorAll('a, .logout-btn').forEach(element => {
-                        element.addEventListener('click', (e) => {
-                            // Don't close immediately for logout button to allow confirmation
-                            if (e.target.classList.contains('logout-btn')) {
-                                // Let the logout confirmation handle it
-                                return;
-                            }
-                            closeMobileMenu();
-                        });
-                    });
+                // Click event on overlay
+                mobileMenuOverlay.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    closeMobileMenu();
+                });
 
-                    // Close menu on escape key
-                    document.addEventListener('keydown', function (e) {
-                        if (e.key === 'Escape' && mobileMenuToggle.classList.contains('active')) {
+                // Click event on nav links
+                const navLinkItems = navLinks.querySelectorAll('a.mm-nav-link');
+                navLinkItems.forEach(link => {
+                    link.addEventListener('click', function () {
+                        if (isMobileView()) {
                             closeMobileMenu();
                         }
                     });
-                }
+                });
 
                 // Handle window resize
                 let resizeTimer;
                 window.addEventListener('resize', function () {
                     clearTimeout(resizeTimer);
                     resizeTimer = setTimeout(function () {
-                        // Close menu if resizing from mobile to desktop
-                        if (window.innerWidth > 768 && mobileMenuToggle.classList.contains('active')) {
-                            closeMobileMenu();
+                        if (window.innerWidth > 768) {
+                            if (navLinks.classList.contains('mm-active')) {
+                                closeMobileMenu();
+                            }
                         }
                     }, 250);
                 });
             }
         });
+
+        // Premium Hover Effects Enhancement
+        document.addEventListener('DOMContentLoaded', function () {
+            const cards = document.querySelectorAll('.mm-card, .mm-stat-card, .mm-account-card-item');
+
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    this.style.zIndex = '10';
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    this.style.zIndex = '1';
+                });
+            });
+        });
+
+        // Premium Form Validation Styles
+        document.addEventListener('DOMContentLoaded', function () {
+            const forms = document.querySelectorAll('form');
+
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, textarea');
+
+                inputs.forEach(input => {
+                    input.addEventListener('invalid', function () {
+                        this.style.borderColor = '#ef4444';
+                        this.style.background = '#fef2f2';
+                        this.style.animation = 'mm-input-shake 0.5s ease';
+                    });
+
+                    input.addEventListener('input', function () {
+                        if (this.checkValidity()) {
+                            this.style.borderColor = '#10b981';
+                            this.style.background = '#f0fdf4';
+                        }
+                    });
+                });
+            });
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes mm-input-shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `;
+            document.head.appendChild(style);
+        });
     </script>
+
     {% block extra_js %}{% endblock %}
 </body>
-
 
 </html>
