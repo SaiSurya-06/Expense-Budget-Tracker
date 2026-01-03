@@ -2,195 +2,1875 @@
 {% load humanize %}
 
 {% block content %}
-<div class="layout-container" style="padding: 2rem 0;">
-    <!-- Header Section -->
-    <div class="d-flex justify-between align-center mb-4" style="flex-wrap: wrap; gap: 1.5rem;">
-        <div>
-            <h1
-                style="font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                Manage Budgets
-            </h1>
-            <p class="text-muted" style="font-size: 1rem;">
-                Track your monthly spending limits and stay on top of your finances.
-            </p>
-        </div>
-        <a href="{% url 'budget_create' %}" class="btn btn-primary"
-            style="background: var(--primary-gradient); color: var(--primary-gradient); border: none; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);">
-            <span>+</span> Create New Budget
-        </a>
-    </div>
-
-    {% if messages %}
-    {% for message in messages %}
-    <div class="card p-4 mb-4 text-{{ message.tags }}"
-        style="border-radius: 12px; border-left: 4px solid {% if message.tags == 'error' %}var(--danger-500){% else %}var(--success-500){% endif %}; background: white;">
-        {{ message }}
-    </div>
-    {% endfor %}
-    {% endif %}
-
-    {% if budgets %}
-    <div class="budget-grid">
-        {% for b in budgets %}
-        <div class="card budget-card">
-            <div class="card-header d-flex justify-between align-start mb-4">
-                <div>
-                    <h3 class="card-title"
-                        style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
-                        {{ b.month|date:"F Y" }}
-                    </h3>
-                    <span class="badge"
-                        style="background: var(--primary-50); color: var(--primary-700); font-weight: 600; font-size: 0.8rem; padding: 0.25rem 0.75rem; border-radius: 20px;">
-                        Monthly Plan
-                    </span>
+<div class="budget-manager-container">
+    <!-- Premium Header -->
+    <div class="budget-header-section">
+        <div class="budget-header-content">
+            <div class="budget-header-text">
+                <div class="budget-breadcrumb">
+                    <a href="{% url 'dashboard' %}" class="breadcrumb-link">Dashboard</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">Budget Manager</span>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{% url 'budget_edit' b.month|date:'Y-m' %}" class="btn btn-icon" title="Edit"
-                        style="color: var(--text-secondary); padding: 0.5rem; border-radius: 8px; transition: all 0.2s;">
-                        ✏️
-                    </a>
-                    <form action="{% url 'budget_delete' b.month|date:'Y-m' %}" method="post"
-                        onsubmit="return confirm('Are you sure you want to delete this budget plan?');"
-                        style="margin: 0;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-icon" title="Delete"
-                            style="color: var(--danger-500); padding: 0.5rem; border-radius: 8px; transition: all 0.2s; background: transparent; border: none; cursor: pointer;">
-                            🗑️
-                        </button>
-                    </form>
+                <h1 class="budget-main-title">
+                    <span class="title-gradient">Manage Budgets</span>
+                    <span class="budget-count-badge">{{ budgets|length }} Active</span>
+                </h1>
+                <p class="budget-subtitle">
+                    <i class="fas fa-chart-line"></i>
+                    Track your monthly spending limits and stay on top of your finances
+                </p>
+            </div>
+            
+            <div class="budget-header-actions">
+                <a href="{% url 'budget_create' %}" class="btn btn-create-budget">
+                    <span class="btn-icon-wrapper">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                    <span class="btn-text">Create Budget</span>
+                    <span class="btn-hint">New Plan</span>
+                </a>
+                <button class="btn btn-outline btn-insights" onclick="showBudgetInsights()">
+                    <i class="fas fa-lightbulb"></i>
+                    Insights
+                </button>
+            </div>
+        </div>
+        
+        <!-- Dynamic Stats Bar -->
+        <div class="budget-stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="onTrackCount">
+                        <!-- Calculate on-track budgets -->
+                        {% with on_track_count=0 %}
+                            {% for b in budgets %}
+                                {% if b.global and b.global.percent < 80 and not b.global.is_exceeded %}
+                                    {% with on_track_count=on_track_count|add:1 %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ on_track_count }}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">On Track</div>
                 </div>
             </div>
-
-            <!-- Global Limit -->
-            <div class="mb-4 p-3" style="background: #f9fafb; border-radius: 12px;">
-                <div class="d-flex justify-between mb-2 align-center">
-                    <span style="font-weight: 600; color: var(--text-secondary); font-size: 0.9rem;">Total Budget</span>
-                    {% if b.global %}
-                    <span
-                        style="font-weight: 700; font-size: 1rem; color: {% if b.global.is_exceeded %}var(--danger-600){% else %}var(--text-primary){% endif %};">
-                        ₹{{ b.global.spent|intcomma }} <span class="text-muted" style="font-weight: 400;">/ ₹{{
-                            b.global.limit|intcomma }}</span>
-                    </span>
-                    {% else %}
-                    <span class="text-muted" style="font-size: 0.9rem;">No Limit Set</span>
-                    {% endif %}
+            
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                {% if b.global %}
-                <div class="progress-track">
-                    <div class="progress-fill"
-                        style="width: {{ b.global.percent|floatformat:0 }}%; 
-                               background: {% if b.global.is_exceeded %}var(--danger-500){% else %}var(--primary-gradient){% endif %};">
+                <div class="stat-content">
+                    <div class="stat-value" id="nearingLimitCount">
+                        <!-- Calculate nearing limit budgets -->
+                        {% with nearing_count=0 %}
+                            {% for b in budgets %}
+                                {% if b.global and b.global.percent >= 80 and b.global.percent < 100 and not b.global.is_exceeded %}
+                                    {% with nearing_count=nearing_count|add:1 %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ nearing_count }}
+                        {% endwith %}
                     </div>
+                    <div class="stat-label">Nearing Limit</div>
                 </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="exceededCount">
+                        <!-- Calculate exceeded budgets -->
+                        {% with exceeded_count=0 %}
+                            {% for b in budgets %}
+                                {% if b.global and b.global.is_exceeded %}
+                                    {% with exceeded_count=exceeded_count|add:1 %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ exceeded_count }}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">Exceeded</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalPlansCount">
+                        {{ budgets|length }}
+                    </div>
+                    <div class="stat-label">Total Plans</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages/Alerts -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <div class="alert-icon">
+                {% if message.tags == 'error' %}
+                <i class="fas fa-exclamation-circle"></i>
+                {% elif message.tags == 'success' %}
+                <i class="fas fa-check-circle"></i>
+                {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                <i class="fas fa-info-circle"></i>
                 {% endif %}
             </div>
+            <div class="alert-content">
+                {{ message }}
+            </div>
+            <button class="alert-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-            <!-- Categories -->
-            <div>
-                <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">
-                    Category Limits ({{ b.categories|length }})
-                </h4>
-                {% if b.categories %}
-                <div class="custom-scrollbar" style="max-height: 240px; overflow-y: auto; padding-right: 0.5rem;">
-                    {% for cat in b.categories %}
-                    <div class="mb-3">
-                        <div class="d-flex justify-between mb-1" style="font-size: 0.9rem;">
-                            <span style="font-weight: 500;">{{ cat.category.name }}</span>
-                            <span
-                                style="font-weight: 600; font-size: 0.85rem; color: {% if cat.is_exceeded %}var(--danger-600){% else %}var(--text-secondary){% endif %};">
-                                {{ cat.spent|intcomma }} / {{ cat.limit|intcomma }}
-                            </span>
+    <!-- Budget Cards Grid -->
+    {% if budgets %}
+    <div class="budget-cards-grid" id="budgetCardsGrid">
+        {% for b in budgets %}
+        <div class="budget-card {% if b.global and b.global.is_exceeded %}budget-exceeded{% elif b.global and b.global.percent >= 80 %}budget-warning{% endif %}" 
+             data-budget-status="{% if b.global %}{% if b.global.is_exceeded %}exceeded{% elif b.global.percent >= 80 %}nearing{% else %}ontrack{% endif %}{% else %}nolimit{% endif %}">
+            <!-- Card Header -->
+            <div class="budget-card-header">
+                <div class="budget-card-title-section">
+                    <div class="budget-month-display">
+                        <div class="month-badge">
+                            <span class="month-text">{{ b.month|date:"F"|slice:":3" }}</span>
+                            <span class="year-text">{{ b.month|date:"Y"|slice:"2:" }}</span>
                         </div>
-                        <div class="progress-track small">
-                            <div class="progress-fill"
-                                style="width: {{ cat.percent|floatformat:0 }}%; 
-                                       background: {% if cat.is_exceeded %}var(--danger-500){% else %}var(--success-500){% endif %};">
+                        <div class="budget-title">
+                            <h3>{{ b.month|date:"F Y" }}</h3>
+                            <div class="budget-type-badge">
+                                <i class="fas fa-calendar-check"></i>
+                                Monthly Budget
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
+                    <div class="budget-status-indicator">
+                        {% if b.global %}
+                            {% if b.global.is_exceeded %}
+                            <span class="status-badge status-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Over Budget
+                            </span>
+                            {% elif b.global.percent >= 80 %}
+                            <span class="status-badge status-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Nearing Limit
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-success">
+                                <i class="fas fa-check-circle"></i>
+                                On Track
+                            </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="status-badge status-info">
+                                <i class="fas fa-info-circle"></i>
+                                No Limit Set
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
-                {% else %}
-                <div class="text-center p-4" style="border: 1px dashed #e5e7eb; border-radius: 12px;">
-                    <p class="text-muted text-sm m-0">No category limits defined.</p>
+                
+                <div class="budget-card-actions">
+                    <div class="action-buttons">
+                        <a href="{% url 'budget_edit' b.month|date:'Y-m' %}" class="action-btn action-edit" title="Edit Budget">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{% url 'budget_delete' b.month|date:'Y-m' %}" method="post" 
+                              onsubmit="return confirm('Are you sure you want to delete this budget plan?');"
+                              class="delete-form">
+                            {% csrf_token %}
+                            <button type="submit" class="action-btn action-delete" title="Delete Budget">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                        <button class="action-btn action-more" title="More Options">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
                 </div>
-                {% endif %}
+            </div>
+            
+            <!-- Global Budget Progress -->
+            <div class="global-budget-section">
+                <div class="section-label">
+                    <i class="fas fa-globe"></i>
+                    Total Budget
+                </div>
+                <div class="budget-progress-container">
+                    <div class="budget-info-row">
+                        <div class="budget-amounts">
+                            <span class="spent-amount {% if b.global and b.global.is_exceeded %}amount-danger{% elif b.global and b.global.percent >= 80 %}amount-warning{% endif %}">
+                                ₹{{ b.global.spent|default:0|floatformat:2|intcomma }}
+                            </span>
+                            <span class="limit-amount">
+                                / ₹{{ b.global.limit|default:0|floatformat:2|intcomma }}
+                            </span>
+                        </div>
+                        <div class="budget-percent">
+                            {% if b.global %}
+                            <span class="percent-value {% if b.global.is_exceeded %}percent-danger{% elif b.global.percent >= 80 %}percent-warning{% endif %}">
+                                {{ b.global.percent|floatformat:0 }}%
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if b.global %}
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar">
+                            <div class="progress-fill {% if b.global.is_exceeded %}progress-danger{% elif b.global.percent >= 80 %}progress-warning{% else %}progress-primary{% endif %}"
+                                 style="width: {% if b.global.percent > 100 %}100{% else %}{{ b.global.percent|floatformat:0 }}{% endif %}%;">
+                                <div class="progress-glow"></div>
+                            </div>
+                        </div>
+                        <div class="progress-markers">
+                            <span class="marker marker-50">0%</span>
+                            <span class="marker marker-80">50%</span>
+                            <span class="marker marker-100">100%</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="no-limit-message">
+                        <i class="fas fa-info-circle"></i>
+                        No total budget limit set
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Category Limits -->
+            <div class="category-limits-section">
+                <div class="section-header">
+                    <div class="section-label">
+                        <i class="fas fa-tags"></i>
+                        Category Limits
+                        <span class="category-count">({{ b.categories|length }})</span>
+                    </div>
+                    <div class="section-actions">
+                        <button class="btn-toggle-categories" onclick="toggleCategories(this)">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="categories-list">
+                    {% if b.categories %}
+                    <div class="categories-container">
+                        {% for cat in b.categories %}
+                        <div class="category-item {% if cat.is_exceeded %}category-exceeded{% elif cat.percent >= 80 %}category-warning{% endif %}">
+                            <div class="category-info">
+                                <div class="category-name">
+                                    <span class="category-icon">
+                                        <i class="fas fa-tag"></i>
+                                    </span>
+                                    {{ cat.category.name }}
+                                </div>
+                                <div class="category-amounts">
+                                    <span class="category-spent {% if cat.is_exceeded %}amount-danger{% elif cat.percent >= 80 %}amount-warning{% endif %}">
+                                        ₹{{ cat.spent|intcomma }}
+                                    </span>
+                                    <span class="category-limit">
+                                        / ₹{{ cat.limit|intcomma }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="category-progress">
+                                <div class="progress-bar small">
+                                    <div class="progress-fill {% if cat.is_exceeded %}progress-danger{% elif cat.percent >= 80 %}progress-warning{% else %}progress-success{% endif %}"
+                                         style="width: {% if cat.percent > 100 %}100{% else %}{{ cat.percent|floatformat:0 }}{% endif %}%;">
+                                    </div>
+                                </div>
+                                <div class="category-percent">
+                                    {{ cat.percent|floatformat:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-categories-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <div class="empty-state-text">
+                            No category limits defined
+                        </div>
+                        <a href="{% url 'budget_edit' b.month|date:'Y-m' %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-plus"></i>
+                            Add Categories
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Card Footer -->
+            <div class="budget-card-footer">
+                <div class="budget-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        Updated Recently
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-chart-pie"></i>
+                        {{ b.categories|length }} Categories
+                    </div>
+                </div>
+                <div class="budget-footer-actions">
+                    <a href="{% url 'budget_edit' b.month|date:'Y-m' %}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-cog"></i>
+                        Manage
+                    </a>
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
+    
+    <!-- Calculate filter counts for the template -->
+    {% with on_track_count=0 nearing_limit_count=0 exceeded_count=0 no_limit_count=0 %}
+        {% for b in budgets %}
+            {% if b.global %}
+                {% if b.global.is_exceeded %}
+                    {% with exceeded_count=exceeded_count|add:1 %}
+                    {% endwith %}
+                {% elif b.global.percent >= 80 %}
+                    {% with nearing_limit_count=nearing_limit_count|add:1 %}
+                    {% endwith %}
+                {% elif b.global.percent < 80 %}
+                    {% with on_track_count=on_track_count|add:1 %}
+                    {% endwith %}
+                {% endif %}
+            {% else %}
+                {% with no_limit_count=no_limit_count|add:1 %}
+                {% endwith %}
+            {% endif %}
+        {% endfor %}
+    {% endwith %}
+    
+    <!-- Budget Stats Filter -->
+    <div class="budget-filter-container">
+        <div class="filter-options">
+            <span class="filter-label">Filter by Status:</span>
+            <button class="filter-btn active" data-filter="all">All ({{ budgets|length }})</button>
+            <button class="filter-btn" data-filter="ontrack">
+                <span class="filter-badge success"></span>
+                On Track (<span id="filterOnTrack">{{ on_track_count }}</span>)
+            </button>
+            <button class="filter-btn" data-filter="nearing">
+                <span class="filter-badge warning"></span>
+                Nearing Limit (<span id="filterNearing">{{ nearing_limit_count }}</span>)
+            </button>
+            <button class="filter-btn" data-filter="exceeded">
+                <span class="filter-badge danger"></span>
+                Exceeded (<span id="filterExceeded">{{ exceeded_count }}</span>)
+            </button>
+            <button class="filter-btn" data-filter="nolimit">
+                <span class="filter-badge info"></span>
+                No Limit (<span id="filterNoLimit">{{ no_limit_count }}</span>)
+            </button>
+        </div>
+        
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="grid">
+                <i class="fas fa-th-large"></i>
+                Grid View
+            </button>
+            <button class="view-btn" data-view="list">
+                <i class="fas fa-list"></i>
+                List View
+            </button>
+        </div>
+    </div>
+    
     {% else %}
-    <div class="card text-center p-5" style="border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-        <div style="font-size: 4rem; margin-bottom: 1rem;">📊</div>
-        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">No budgets found</h3>
-        <p class="text-muted mb-4">Start taking control of your finances by creating a budget plan for this month.</p>
-        <a href="{% url 'budget_create' %}" class="btn btn-primary"
-            style="background: var(--primary-gradient); color: var(--primary-gradient); padding: 0.75rem 2rem; border-radius: 12px;">
-            Create First Budget
-        </a>
+    <!-- Empty State -->
+    <div class="empty-state-container">
+        <div class="empty-state">
+            <div class="empty-state-illustration">
+                <div class="illustration-circle">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="illustration-wave"></div>
+            </div>
+            <div class="empty-state-content">
+                <h3>No Budget Plans Yet</h3>
+                <p class="empty-state-description">
+                    Start taking control of your finances by creating a budget plan for this month. 
+                    Track spending, set limits, and achieve your financial goals.
+                </p>
+                <div class="empty-state-actions">
+                    <a href="{% url 'budget_create' %}" class="btn btn-create-budget">
+                        <i class="fas fa-plus"></i>
+                        Create Your First Budget
+                    </a>
+                    <button class="btn btn-outline" onclick="showBudgetTips()">
+                        <i class="fas fa-lightbulb"></i>
+                        Budgeting Tips
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>
 
+<!-- Hidden data for JavaScript processing -->
+<div id="budgetStatsData" style="display: none;" 
+     data-on-track="{{ on_track_count }}" 
+     data-nearing="{{ nearing_limit_count }}" 
+     data-exceeded="{{ exceeded_count }}"
+     data-no-limit="{{ no_limit_count }}"
+     data-total="{{ budgets|length }}">
+</div>
+
 <style>
-    .budget-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-        gap: 2rem;
+    /* CSS Variables for Design System */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --surface-bg: #ffffff;
+        --surface-elevated: #ffffff;
+        --surface-hover: #f8fafc;
+        --border-color: #e2e8f0;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+        --success-color: #10b981;
+        --success-light: #d1fae5;
+        --danger-color: #ef4444;
+        --danger-light: #fee2e2;
+        --warning-color: #f59e0b;
+        --warning-light: #fef3c7;
+        --info-color: #3b82f6;
+        --info-light: #dbeafe;
+        --primary-color: #667eea;
+        --primary-light: #e0e7ff;
+        --spacing-xs: 0.5rem;
+        --spacing-sm: 0.75rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --transition-fast: 150ms ease;
+        --transition-normal: 250ms ease;
+        --transition-slow: 350ms ease;
     }
 
-    .budget-card {
-        background: white;
+    /* Main Container */
+    .budget-manager-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-xl);
+    }
+
+    /* Header Section */
+    .budget-header-section {
+        background: var(--surface-bg);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .budget-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .budget-header-text {
+        flex: 1;
+    }
+
+    .budget-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .breadcrumb-link:hover {
+        color: var(--text-primary);
+    }
+
+    .budget-main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0 0 var(--spacing-xs) 0;
+        letter-spacing: -0.025em;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .title-gradient {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .budget-count-badge {
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: var(--spacing-xs) var(--spacing-sm);
         border-radius: 20px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.02);
-        transition: transform 0.2s, box-shadow 0.2s;
+        font-size: 0.875rem;
+        font-weight: 600;
     }
 
-    .budget-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+    .budget-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.125rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
     }
 
-    .progress-track {
-        height: 8px;
-        background: #f3f4f6;
-        border-radius: 4px;
+    .budget-subtitle i {
+        color: var(--primary-color);
+    }
+
+    /* Header Actions */
+    .budget-header-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: 2px solid transparent;
+        position: relative;
         overflow: hidden;
     }
 
-    .progress-track.small {
+    .btn-create-budget {
+        background: var(--primary-gradient);
+        color: white;
+        padding: var(--spacing-md) calc(var(--spacing-lg) + 2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-create-budget:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-create-budget::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -60%;
+        width: 20%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(30deg);
+        transition: all 0.5s ease;
+    }
+
+    .btn-create-budget:hover::after {
+        left: 140%;
+    }
+
+    .btn-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-hint {
+        position: absolute;
+        right: -8px;
+        top: -8px;
+        background: var(--danger-color);
+        color: white;
+        font-size: 0.625rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    .btn-outline {
+        background: white;
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .btn-sm {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.75rem;
+    }
+
+    /* Dynamic Stats Bar */
+    .budget-stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        background: var(--surface-hover);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-lg);
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: white;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+        transition: transform var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stat-icon.success {
+        background: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .stat-icon.warning {
+        background: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .stat-icon.danger {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .stat-icon.info {
+        background: var(--info-light);
+        color: var(--info-color);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* Budget Filter Container */
+    .budget-filter-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-lg);
+        background: var(--surface-hover);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .filter-options {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-right: var(--spacing-sm);
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .filter-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .filter-btn.active {
+        background: var(--primary-light);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .filter-badge {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .filter-badge.success {
+        background: var(--success-color);
+    }
+
+    .filter-badge.warning {
+        background: var(--warning-color);
+    }
+
+    .filter-badge.danger {
+        background: var(--danger-color);
+    }
+
+    .filter-badge.info {
+        background: var(--info-color);
+    }
+
+    .view-toggle {
+        display: inline-flex;
+        background: white;
+        padding: 4px;
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .view-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: none;
+        background: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: calc(var(--border-radius-sm) - 4px);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .view-btn.active {
+        background: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    /* Messages */
+    .messages-container {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .alert {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        margin-bottom: var(--spacing-sm);
+        animation: slideIn 0.3s ease-out;
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        border-left-color: var(--success-color);
+        color: var(--success-color);
+    }
+
+    .alert-error {
+        background: var(--danger-light);
+        border-left-color: var(--danger-color);
+        color: var(--danger-color);
+    }
+
+    .alert-warning {
+        background: var(--warning-light);
+        border-left-color: var(--warning-color);
+        color: var(--warning-color);
+    }
+
+    .alert-info {
+        background: var(--info-light);
+        border-left-color: var(--info-color);
+        color: var(--info-color);
+    }
+
+    .alert-icon {
+        font-size: 1.25rem;
+    }
+
+    .alert-content {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .alert-close {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: var(--spacing-xs);
+        border-radius: 4px;
+        transition: background var(--transition-fast);
+    }
+
+    .alert-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Budget Cards Grid */
+    .budget-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .budget-card {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        transition: all var(--transition-normal);
+        position: relative;
+        animation: slideIn 0.5s ease-out;
+        animation-fill-mode: both;
+    }
+
+    .budget-card:nth-child(1) { animation-delay: 0.1s; }
+    .budget-card:nth-child(2) { animation-delay: 0.2s; }
+    .budget-card:nth-child(3) { animation-delay: 0.3s; }
+    .budget-card:nth-child(4) { animation-delay: 0.4s; }
+    .budget-card:nth-child(5) { animation-delay: 0.5s; }
+
+    .budget-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .budget-card.budget-exceeded {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .budget-card.budget-warning {
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .budget-card.hidden {
+        display: none;
+    }
+
+    .budget-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        opacity: 0;
+        transition: opacity var(--transition-normal);
+    }
+
+    .budget-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Card Header */
+    .budget-card-header {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .budget-card-title-section {
+        flex: 1;
+    }
+
+    .budget-month-display {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .month-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        background: var(--primary-gradient);
+        border-radius: 12px;
+        color: white;
+        font-weight: 700;
+    }
+
+    .month-text {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .year-text {
+        font-size: 1.25rem;
+        line-height: 1;
+    }
+
+    .budget-title h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 var(--spacing-xs) 0;
+    }
+
+    .budget-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .budget-status-indicator {
+        margin-top: var(--spacing-sm);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-success {
+        background: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .status-warning {
+        background: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .status-danger {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .status-info {
+        background: var(--info-light);
+        color: var(--info-color);
+    }
+
+    /* Card Actions */
+    .budget-card-actions {
+        position: relative;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-hover);
+        color: var(--text-secondary);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .action-btn:hover {
+        background: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .action-edit:hover {
+        background: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .action-delete:hover {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .delete-form {
+        display: inline;
+        margin: 0;
+    }
+
+    /* Global Budget Section */
+    .global-budget-section {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .section-label i {
+        color: var(--primary-color);
+    }
+
+    .budget-progress-container {
+        background: var(--surface-hover);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+    }
+
+    .budget-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .budget-amounts {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .spent-amount {
+        color: var(--text-primary);
+    }
+
+    .amount-danger {
+        color: var(--danger-color);
+    }
+
+    .amount-warning {
+        color: var(--warning-color);
+    }
+
+    .limit-amount {
+        color: var(--text-secondary);
+        font-weight: 400;
+    }
+
+    .budget-percent {
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: var(--surface-hover);
+    }
+
+    .percent-danger {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .percent-warning {
+        background: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    /* Progress Bar */
+    .progress-bar-wrapper {
+        position: relative;
+    }
+
+    .progress-bar {
+        height: 10px;
+        background: var(--border-color);
+        border-radius: 5px;
+        overflow: hidden;
+        position: relative;
+        margin-top: var(--spacing-sm);
+    }
+
+    .progress-bar.small {
         height: 6px;
     }
 
     .progress-fill {
         height: 100%;
+        border-radius: 5px;
+        position: relative;
+        transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-primary {
+        background: var(--primary-gradient);
+    }
+
+    .progress-success {
+        background: var(--success-gradient);
+    }
+
+    .progress-warning {
+        background: var(--warning-gradient);
+    }
+
+    .progress-danger {
+        background: var(--danger-gradient);
+    }
+
+    .progress-glow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.4) 50%, 
+            transparent 100%);
+        animation: shimmer 2s infinite;
+    }
+
+    .progress-markers {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+    }
+
+    .marker {
+        font-size: 0.625rem;
+        color: var(--text-tertiary);
+        font-weight: 600;
+    }
+
+    .no-limit-message {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--surface-hover);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-secondary);
+        text-align: center;
+    }
+
+    /* Category Limits */
+    .category-limits-section {
+        padding: var(--spacing-lg);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .category-count {
+        color: var(--text-tertiary);
+        font-weight: 400;
+    }
+
+    .btn-toggle-categories {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: var(--spacing-xs);
         border-radius: 4px;
-        transition: width 1s ease-in-out;
+        transition: all var(--transition-fast);
     }
 
-    .btn-icon:hover {
-        background: #f3f4f6 !important;
+    .btn-toggle-categories:hover {
+        background: var(--surface-hover);
+        color: var(--text-primary);
     }
 
-    .custom-scrollbar::-webkit-scrollbar {
+    .categories-list {
+        max-height: 240px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .categories-list::-webkit-scrollbar {
         width: 6px;
     }
 
-    .custom-scrollbar::-webkit-scrollbar-track {
+    .categories-list::-webkit-scrollbar-track {
         background: transparent;
     }
 
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #e5e7eb;
+    .categories-list::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
         border-radius: 20px;
     }
 
+    .categories-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .category-item {
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        background: var(--surface-hover);
+        transition: all var(--transition-fast);
+    }
+
+    .category-item:hover {
+        background: var(--border-color);
+    }
+
+    .category-item.category-exceeded {
+        border-left: 3px solid var(--danger-color);
+    }
+
+    .category-item.category-warning {
+        border-left: 3px solid var(--warning-color);
+    }
+
+    .category-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .category-name {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .category-icon {
+        color: var(--primary-color);
+    }
+
+    .category-amounts {
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .category-spent {
+        color: var(--text-primary);
+    }
+
+    .category-progress {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .category-percent {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        min-width: 32px;
+        text-align: right;
+    }
+
+    .empty-categories-state {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-md);
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius-sm);
+    }
+
+    .empty-state-icon {
+        font-size: 2rem;
+        color: var(--text-tertiary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .empty-state-text {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    /* Card Footer */
+    .budget-card-footer {
+        padding: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+        background: var(--surface-hover);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .budget-meta {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .budget-footer-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    /* Empty State */
+    .empty-state-container {
+        max-width: 600px;
+        margin: var(--spacing-xl) auto;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-xl);
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .empty-state-illustration {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin: 0 auto var(--spacing-xl) auto;
+    }
+
+    .illustration-circle {
+        width: 100%;
+        height: 100%;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .illustration-wave {
+        position: absolute;
+        bottom: -20px;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: radial-gradient(circle at 50% 0, rgba(102, 126, 234, 0.2), transparent 70%);
+        animation: wave 2s ease-in-out infinite;
+    }
+
+    .empty-state-content h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .empty-state-description {
+        color: var(--text-secondary);
+        font-size: 1.125rem;
+        line-height: 1.6;
+        margin-bottom: var(--spacing-xl);
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .empty-state-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes wave {
+        0%, 100% {
+            transform: scaleY(1);
+        }
+        50% {
+            transform: scaleY(0.8);
+        }
+    }
+
+    /* Counter Animation */
+    @keyframes countUp {
+        from {
+            transform: scale(1.2);
+            opacity: 0.5;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .counting {
+        animation: countUp 0.5s ease-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .budget-cards-grid {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+    }
+
+    @media (max-width: 992px) {
+        .budget-manager-container {
+            padding: var(--spacing-lg);
+        }
+        
+        .budget-header-content {
+            flex-direction: column;
+        }
+        
+        .budget-header-actions {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .budget-stats-bar {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .budget-filter-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-options {
+            justify-content: center;
+        }
+        
+        .view-toggle {
+            align-self: center;
+        }
+    }
+
     @media (max-width: 768px) {
-        .budget-grid {
+        .budget-cards-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .budget-stats-bar {
+            grid-template-columns: 1fr;
+        }
+        
+        .budget-card-header {
+            flex-direction: column;
+        }
+        
+        .budget-card-footer {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .budget-meta {
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .empty-state-actions {
+            flex-direction: column;
+        }
+        
+        .filter-options {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-btn {
+            justify-content: center;
+        }
+        
+        .view-toggle {
+            width: 100%;
+        }
+        
+        .view-btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .budget-manager-container {
+            padding: var(--spacing-md);
+        }
+        
+        .budget-main-title {
+            font-size: 2rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+        
+        .budget-subtitle {
+            font-size: 1rem;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .budget-header-actions {
+            flex-direction: column;
+        }
+        
+        .month-badge {
+            width: 48px;
+            height: 48px;
         }
     }
 </style>
+
+<script>
+    // Calculate budget statistics dynamically
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateBudgetStats();
+        initializeFilterButtons();
+        initializeViewToggle();
+        initializeStatsCardClicks();
+    });
+
+    function calculateBudgetStats() {
+        let onTrackCount = 0;
+        let nearingLimitCount = 0;
+        let exceededCount = 0;
+        let noLimitCount = 0;
+        
+        const budgetCards = document.querySelectorAll('.budget-card');
+        
+        budgetCards.forEach(card => {
+            const status = card.getAttribute('data-budget-status');
+            
+            switch(status) {
+                case 'ontrack':
+                    onTrackCount++;
+                    break;
+                case 'nearing':
+                    nearingLimitCount++;
+                    break;
+                case 'exceeded':
+                    exceededCount++;
+                    break;
+                case 'nolimit':
+                    noLimitCount++;
+                    break;
+            }
+        });
+        
+        // Update the stats bar with animation
+        updateStatCounter('onTrackCount', onTrackCount);
+        updateStatCounter('nearingLimitCount', nearingLimitCount);
+        updateStatCounter('exceededCount', exceededCount);
+        updateStatCounter('totalPlansCount', budgetCards.length);
+        
+        // Update filter counts
+        document.getElementById('filterOnTrack').textContent = onTrackCount;
+        document.getElementById('filterNearing').textContent = nearingLimitCount;
+        document.getElementById('filterExceeded').textContent = exceededCount;
+        document.getElementById('filterNoLimit').textContent = noLimitCount;
+        
+        // Update the "All" filter count
+        const allFilterBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allFilterBtn) {
+            allFilterBtn.textContent = `All (${budgetCards.length})`;
+        }
+    }
+
+    function updateStatCounter(elementId, count) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const currentCount = parseInt(element.textContent) || 0;
+        
+        // Animate the counter if there's a change
+        if (currentCount !== count) {
+            element.classList.add('counting');
+            element.textContent = count;
+            
+            setTimeout(() => {
+                element.classList.remove('counting');
+            }, 500);
+        } else {
+            element.textContent = count;
+        }
+    }
+
+    function initializeFilterButtons() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const budgetCards = document.querySelectorAll('.budget-card');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                
+                // Show/hide cards based on filter
+                budgetCards.forEach(card => {
+                    const status = card.getAttribute('data-budget-status');
+                    
+                    if (filter === 'all' || status === filter) {
+                        card.classList.remove('hidden');
+                        // Add animation for showing
+                        card.style.animation = 'slideIn 0.3s ease-out forwards';
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    }
+
+    function initializeStatsCardClicks() {
+        const statCards = document.querySelectorAll('.stat-card');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        
+        statCards.forEach((card, index) => {
+            card.addEventListener('click', function() {
+                // Remove active class from all stat cards
+                statCards.forEach(c => c.classList.remove('active'));
+                // Add active class to clicked card
+                this.classList.add('active');
+                
+                // Remove active class from all filter buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Determine which filter to activate based on which stat card was clicked
+                let filter = 'all';
+                switch(index) {
+                    case 0: // On Track
+                        filter = 'ontrack';
+                        break;
+                    case 1: // Nearing Limit
+                        filter = 'nearing';
+                        break;
+                    case 2: // Exceeded
+                        filter = 'exceeded';
+                        break;
+                    case 3: // Total Plans
+                        filter = 'all';
+                        break;
+                }
+                
+                // Activate the corresponding filter button
+                const targetButton = document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+                if (targetButton) {
+                    targetButton.classList.add('active');
+                }
+                
+                // Trigger the filter
+                const budgetCards = document.querySelectorAll('.budget-card');
+                budgetCards.forEach(card => {
+                    const status = card.getAttribute('data-budget-status');
+                    
+                    if (filter === 'all' || status === filter) {
+                        card.classList.remove('hidden');
+                        card.style.animation = 'slideIn 0.3s ease-out forwards';
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    }
+
+    function initializeViewToggle() {
+        const viewButtons = document.querySelectorAll('.view-btn');
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active state
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Toggle between grid and list view
+                const view = this.getAttribute('data-view');
+                const grid = document.querySelector('.budget-cards-grid');
+                
+                if (view === 'list') {
+                    grid.style.gridTemplateColumns = '1fr';
+                    grid.classList.add('list-view');
+                } else {
+                    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(380px, 1fr))';
+                    grid.classList.remove('list-view');
+                }
+            });
+        });
+    }
+
+    // Toggle categories visibility
+    function toggleCategories(button) {
+        const categoriesList = button.closest('.category-limits-section').querySelector('.categories-list');
+        const icon = button.querySelector('i');
+        
+        categoriesList.classList.toggle('collapsed');
+        if (categoriesList.classList.contains('collapsed')) {
+            categoriesList.style.maxHeight = '0';
+            icon.className = 'fas fa-chevron-up';
+        } else {
+            categoriesList.style.maxHeight = '240px';
+            icon.className = 'fas fa-chevron-down';
+        }
+    }
+
+    // Budget insights modal (placeholder)
+    function showBudgetInsights() {
+        const onTrack = document.getElementById('onTrackCount').textContent;
+        const nearing = document.getElementById('nearingLimitCount').textContent;
+        const exceeded = document.getElementById('exceededCount').textContent;
+        const total = document.getElementById('totalPlansCount').textContent;
+        
+        alert(`Budget Insights:\n\n✅ On Track: ${onTrack}\n⚠️ Nearing Limit: ${nearing}\n❌ Exceeded: ${exceeded}\n📊 Total Plans: ${total}\n\n${exceeded > 0 ? 'Consider reviewing exceeded budgets to adjust limits.' : 'Great job! All budgets are under control.'}`);
+    }
+
+    // Budget tips modal (placeholder)
+    function showBudgetTips() {
+        alert('Budgeting Tips:\n\n1. Start with tracking all expenses\n2. Set realistic category limits\n3. Review and adjust monthly\n4. Save for unexpected expenses\n5. Celebrate when you stay within budget!\n\nPro Tip: Use the filter buttons to focus on budgets that need attention.');
+    }
+
+    // Hover effect for progress bars
+    document.querySelectorAll('.progress-fill').forEach(bar => {
+        bar.addEventListener('mouseenter', function() {
+            this.style.transform = 'scaleY(1.2)';
+        });
+        
+        bar.addEventListener('mouseleave', function() {
+            this.style.transform = 'scaleY(1)';
+        });
+    });
+</script>
 {% endblock %}

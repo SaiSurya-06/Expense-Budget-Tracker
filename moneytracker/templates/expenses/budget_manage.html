@@ -1,289 +1,2077 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
+{% load mathfilters %}
 {% block content %}
-<div class="layout-container" style="padding: 2rem 0; max-width: 900px;">
-    <!-- Header -->
-    <div class="d-flex justify-between align-center mb-4">
-        <div>
-            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">
-                {{ is_edit|yesno:"Edit Budget,Create Budget" }}
-            </h1>
-            <p class="text-muted">
-                {{ is_edit|yesno:"Update your spending limits for this month.,Set up a new financial plan." }}
-            </p>
+<div class="budget-form-container">
+    <!-- Navigation Header -->
+    <div class="form-navigation">
+        <div class="navigation-left">
+            <a href="{% url 'budget_list' %}" class="nav-back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span class="nav-text">Back to Budgets</span>
+            </a>
         </div>
-        <a href="{% url 'budget_list' %}" class="btn btn-outline"
-            style="border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600;">
-            ← Cancel
-        </a>
+        <div class="navigation-center">
+            <div class="form-step-indicator">
+                <div class="step active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Set Limits</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Review</div>
+                </div>
+            </div>
+        </div>
+        <div class="navigation-right">
+            <div class="current-month-display">
+                <i class="fas fa-calendar-alt"></i>
+                <span id="currentMonth">{{ current_date|date:"F Y" }}</span>
+            </div>
+        </div>
     </div>
 
-    <form method="post" class="card"
-        style="background: white; border-radius: 20px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.05); padding: 2rem;">
-        {% csrf_token %}
-
-        <!-- General Settings Section -->
-        <div class="mb-5">
-            <h3 class="section-title">General Settings</h3>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="{{ form.month.id_for_label }}" class="form-label">Month</label>
-                    <div style="position: relative;">
-                        <!-- Using a wrapper to potentially add icons if needed -->
-                        {{ form.month }}
-                    </div>
-                    {% if form.month.errors %}
-                    <div class="text-danger mt-1 text-sm">{{ form.month.errors }}</div>
+    <!-- Form Container -->
+    <div class="form-card">
+        <!-- Form Header -->
+        <div class="form-header">
+            <div class="form-header-content">
+                <h1 class="form-title">
+                    {{ is_edit|yesno:"Edit Budget Plan,Create Budget Plan" }}
+                    {% if is_edit %}
+                    <span class="budget-month-badge">{{ month|date:"F Y" }}</span>
                     {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="{{ form.limit_amount.id_for_label }}" class="form-label">Total Monthly Limit</label>
-                    <div class="input-wrapper">
-                        <span class="currency-prefix">₹</span>
-                        {{ form.limit_amount }}
-                    </div>
-                    <small class="text-muted text-sm mt-1 d-block">Overall cap for all spending this month.</small>
-                    {% if form.limit_amount.errors %}
-                    <div class="text-danger mt-1 text-sm">{{ form.limit_amount.errors }}</div>
-                    {% endif %}
+                </h1>
+                <p class="form-subtitle">
+                    {{ is_edit|yesno:"Update your spending limits for this month.,Set up a new financial plan to track and control your expenses." }}
+                </p>
+            </div>
+            <div class="form-header-icon">
+                <div class="icon-circle">
+                    <i class="fas fa-chart-pie"></i>
                 </div>
             </div>
         </div>
 
-        <hr class="divider">
+        <!-- Progress Bar -->
+        <div class="form-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 33%;"></div>
+            </div>
+            <div class="progress-label">Step 1 of 3</div>
+        </div>
 
-        <!-- Category Limits Section -->
-        <div class="mb-4">
-            <div class="d-flex justify-between align-end mb-3">
-                <div>
-                    <h3 class="section-title">Category Limits (Optional)</h3>
-                    <p class="text-muted text-sm">Define specific caps for individual categories. Leave blank for no
-                        limit.</p>
+        <!-- Main Form -->
+        <form method="post" class="budget-form" id="budgetForm">
+            {% csrf_token %}
+
+            <!-- General Settings Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="section-title-content">
+                        <h3 class="section-title">General Settings</h3>
+                        <p class="section-subtitle">Define the basic parameters of your budget plan</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <!-- Month Selection -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar"></i>
+                            Month
+                        </label>
+                        <div class="input-group">
+                            <div class="input-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="month-selector-wrapper">
+                                {{ form.month }}
+                                <div class="month-selector-preview" id="monthPreview" role="button" tabindex="0">
+                                    <span class="month-text">{{ form.month.value|date:"F"|default:"Select Month" }}</span>
+                                    <span class="year-text">{{ form.month.value|date:"Y"|default:"YYYY" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if form.month.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.month.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-hint">
+                            <i class="fas fa-info-circle"></i>
+                            Select the month you want to budget for
+                        </div>
+                    </div>
+
+                    <!-- Total Budget Limit -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Total Monthly Limit
+                        </label>
+                        <div class="input-group">
+                            <div class="input-icon">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                            <div class="currency-input">
+                                {{ form.limit_amount }}
+                                <span class="currency-symbol">₹</span>
+                            </div>
+                        </div>
+                        {% if form.limit_amount.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.limit_amount.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-hint">
+                            <i class="fas fa-info-circle"></i>
+                            Overall cap for all spending this month
+                        </div>
+                        
+                        <!-- Quick Amount Suggestions -->
+                        <div class="quick-amounts">
+                            <span class="quick-label">Quick set:</span>
+                            <button type="button" class="quick-amount-btn" data-amount="10000">₹10K</button>
+                            <button type="button" class="quick-amount-btn" data-amount="20000">₹20K</button>
+                            <button type="button" class="quick-amount-btn" data-amount="50000">₹50K</button>
+                            <button type="button" class="quick-amount-btn" data-amount="100000">₹1L</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="category-table-container">
-                <table class="category-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 60%;">Category</th>
-                            <th style="width: 40%;">Limit Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <!-- Category Limits Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="section-title-content">
+                        <h3 class="section-title">Category Limits (Optional)</h3>
+                        <p class="section-subtitle">Define specific caps for individual expense categories</p>
+                    </div>
+                    <div class="section-actions">
+                        <button type="button" class="btn btn-outline btn-sm" id="toggleAllCategories">
+                            <i class="fas fa-eye"></i>
+                            Show All
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" id="resetCategoryLimits">
+                            <i class="fas fa-redo"></i>
+                            Reset All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Type Filter -->
+                <div class="category-filter">
+                    <div class="filter-options">
+                        <button type="button" class="filter-btn active" data-filter="all">
+                            <i class="fas fa-layer-group"></i>
+                            All Categories ({{ cat_form_data|length }})
+                        </button>
+                        <button type="button" class="filter-btn" data-filter="expense">
+                            <i class="fas fa-arrow-down"></i>
+                            Expenses
+                        </button>
+                        <button type="button" class="filter-btn" data-filter="income">
+                            <i class="fas fa-arrow-up"></i>
+                            Income
+                        </button>
+                    </div>
+                    <div class="category-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="categorySearch" placeholder="Search categories...">
+                    </div>
+                </div>
+
+                <!-- Categories Table -->
+                <div class="categories-table-container">
+                    <div class="categories-table-header">
+                        <div class="header-column" style="width: 45%;">
+                            <i class="fas fa-tag"></i>
+                            Category
+                        </div>
+                        <div class="header-column" style="width: 25%;">
+                            <i class="fas fa-chart-bar"></i>
+                            Previous Month
+                        </div>
+                        <div class="header-column" style="width: 30%;">
+                            <i class="fas fa-limit"></i>
+                            Monthly Limit
+                        </div>
+                    </div>
+
+                    <div class="categories-list" id="categoriesList">
                         {% for item in cat_form_data %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-center gap-2">
-                                    <span class="category-icon">
-                                        {% if item.category.type == 'income' %}💰{% else %}💸{% endif %}
-                                    </span>
-                                    <div>
-                                        <div class="font-weight-600 text-dark">{{ item.category.name }}</div>
-                                        <span
-                                            class="badge {% if item.category.type == 'income' %}badge-success{% else %}badge-neutral{% endif %}"
-                                            style="font-size: 0.7rem;">
-                                            {{ item.category.type|title }}
-                                        </span>
+                        <div class="category-item" data-category-id="{{ item.category.id }}" 
+                             data-category-type="{{ item.category.type }}" 
+                             data-category-name="{{ item.category.name|lower }}">
+                            <div class="category-info">
+                                <div class="category-icon-wrapper">
+                                    <div class="category-icon type-{{ item.category.type }}">
+                                        {% if item.category.type == 'income' %}
+                                        <i class="fas fa-arrow-up"></i>
+                                        {% else %}
+                                        <i class="fas fa-arrow-down"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="category-details">
+                                        <div class="category-name">{{ item.category.name }}</div>
+                                        <div class="category-meta">
+                                            <span class="badge type-{{ item.category.type }}">
+                                                {{ item.category.type|title }}
+                                            </span>
+                                            {% if item.previous_spent %}
+                                            <span class="previous-spent">
+                                                Spent ₹{{ item.previous_spent|default:"0"|floatformat:0|intcomma }} last month
+                                            </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="input-wrapper small">
-                                    <span class="currency-prefix">₹</span>
-                                    <input type="number" step="0.01" name="cat_limit_{{ item.category.id }}"
-                                        value="{{ item.limit }}" class="form-control" placeholder="No Limit">
+                                <div class="category-history">
+                                    {% if item.previous_spent %}
+                                    <div class="previous-amount">
+                                        <span class="amount">₹{{ item.previous_spent|default:"0"|floatformat:0|intcomma }}</span>
+                                        <span class="period">Last Month</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="no-history">
+                                        <i class="fas fa-history"></i>
+                                        No history
+                                    </div>
+                                    {% endif %}
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
+                            <div class="category-limit">
+                                <div class="limit-input-wrapper">
+                                    <div class="currency-prefix">₹</div>
+                                    <input type="number" step="0.01" name="cat_limit_{{ item.category.id }}"
+                                           value="{{ item.limit|default:'' }}" 
+                                           class="limit-input" 
+                                           placeholder="No limit"
+                                           data-default="{{ item.limit|default:'' }}">
+                                    <div class="limit-actions">
+                                        <button type="button" class="limit-action-btn copy-last-month" 
+                                                title="Copy last month's spending">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button type="button" class="limit-action-btn clear-limit" 
+                                                title="Clear limit">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% if item.limit and item.previous_spent %}
+                                <div class="limit-comparison">
+                                    {% if item.diff is not None %}
+                                    <div class="limit-comparison">
+                                        <span class="comparison {% if item.diff >= 0 %}positive{% else %}negative{% endif %}">
+                                            <i class="fas fa-{% if item.diff >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                                            ₹{{ item.diff|abs|floatformat:0|intcomma }}
+                                            {% if item.diff >= 0 %}
+                                                higher
+                                            {% else %}
+                                                lower
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+
+                <!-- Category Summary -->
+                <div class="category-summary">
+                    <div class="summary-item">
+                        <div class="summary-label">
+                            <i class="fas fa-check-circle"></i>
+                            Categories with limits
+                        </div>
+                        <div class="summary-value" id="categoriesWithLimit">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">
+                            <i class="fas fa-calculator"></i>
+                            Total category limits
+                        </div>
+                        <div class="summary-value" id="totalCategoryLimits">₹0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">
+                            <i class="fas fa-balance-scale"></i>
+                            Remaining for others
+                        </div>
+                        <div class="summary-value" id="remainingBudget">₹0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="actions-left">
+                    {% if is_edit and month_str %}
+                    <button type="submit" formaction="{% url 'budget_delete' month_str %}"
+                            onclick="return confirmDeletion()"
+                            class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete Budget
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="actions-right">
+                    <a href="{% url 'budget_list' %}" class="btn btn-outline">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-save">
+                        <i class="fas fa-save"></i>
+                        {{ is_edit|yesno:"Update Budget,Create Budget" }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Preview Sidebar -->
+    <div class="preview-sidebar">
+        <div class="preview-header">
+            <h3 class="preview-title">
+                <i class="fas fa-eye"></i>
+                Budget Preview
+            </h3>
+            <p class="preview-subtitle">Live preview of your budget plan</p>
+        </div>
+
+        <div class="preview-content">
+            <!-- Month Preview -->
+            <div class="preview-section">
+                <div class="preview-item">
+                    <div class="preview-label">Month</div>
+                    <div class="preview-value" id="previewMonth">Not set</div>
+                </div>
+                <div class="preview-item">
+                    <div class="preview-label">Total Limit</div>
+                    <div class="preview-value" id="previewTotalLimit">₹0</div>
+                </div>
+            </div>
+
+            <!-- Category Limits Preview -->
+            <div class="preview-section">
+                <div class="preview-section-header">
+                    <h4>Category Limits</h4>
+                    <span class="preview-count" id="previewCategoryCount">0</span>
+                </div>
+                <div class="preview-categories" id="previewCategories">
+                    <div class="empty-preview">
+                        <i class="fas fa-tags"></i>
+                        <p>No category limits set</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="preview-summary">
+                <div class="summary-row">
+                    <div class="summary-label">Total Allocated</div>
+                    <div class="summary-value" id="previewTotalAllocated">₹0</div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Remaining</div>
+                    <div class="summary-value" id="previewRemaining">₹0</div>
+                </div>
+                <div class="summary-row total">
+                    <div class="summary-label">Overall Status</div>
+                    <div class="summary-value status-healthy" id="previewStatus">Healthy</div>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="preview-tips">
+                <div class="tips-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>Tips</h4>
+                </div>
+                <ul class="tips-list">
+                    <li>Start with your essential expenses first</li>
+                    <li>Leave 10-15% buffer for unexpected costs</li>
+                    <li>Review and adjust limits monthly</li>
+                </ul>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Actions -->
-        <div class="d-flex justify-between align-center mt-4 pt-4" style="border-top: 1px solid var(--border);">
-            {% if is_edit and month_str %}
-            <button type="submit" formaction="{% url 'budget_delete' month_str %}"
-                onclick="return confirm('Are you sure you want to delete this entire budget plan? This action cannot be undone.');"
-                class="btn btn-danger-outline">
-                🗑️ Delete Budget
-            </button>
-            {% else %}
-            <div></div> <!-- Spacer -->
-            {% endif %}
-
-            <button type="submit" class="btn btn-primary btn-lg" style="color: var(--primary-gradient);">
-                <span class="icon">💾</span> Save Budget Plan
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Delete Budget Plan</h3>
+        </div>
+        <div class="modal-content">
+            <p>Are you sure you want to delete the budget plan for <strong id="deleteMonth">{{ month|date:"F Y" }}</strong>?</p>
+            <p class="text-danger">This action cannot be undone. All category limits and progress tracking for this month will be lost.</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button type="submit" formaction="{% url 'budget_delete' month_str %}" class="btn btn-danger">
+                Yes, Delete Budget
             </button>
         </div>
-    </form>
+    </div>
 </div>
 
 <style>
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
+    /* CSS Variables for Design System */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --surface-bg: #ffffff;
+        --surface-elevated: #ffffff;
+        --surface-hover: #f8fafc;
+        --border-color: #e2e8f0;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+        --success-color: #10b981;
+        --success-light: #d1fae5;
+        --danger-color: #ef4444;
+        --danger-light: #fee2e2;
+        --warning-color: #f59e0b;
+        --warning-light: #fef3c7;
+        --info-color: #3b82f6;
+        --info-light: #dbeafe;
+        --primary-color: #667eea;
+        --primary-light: #e0e7ff;
+        --spacing-xs: 0.5rem;
+        --spacing-sm: 0.75rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --transition-fast: 150ms ease;
+        --transition-normal: 250ms ease;
+        --transition-slow: 350ms ease;
+    }
+
+    /* Main Container */
+    .budget-form-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--spacing-xl);
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-xl);
+    }
+
+    /* Navigation Header */
+    .form-navigation {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-md) 0;
+        margin-bottom: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-back-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .nav-back-btn:hover {
+        background: var(--surface-hover);
         color: var(--text-primary);
     }
 
-    .form-group {
-        margin-bottom: 1.5rem;
+    .form-step-indicator {
+        display: flex;
+        gap: var(--spacing-xl);
     }
 
-    .form-label {
-        display: block;
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--surface-hover);
         color: var(--text-secondary);
-    }
-
-    /* Standard Input Styling */
-    input[type="text"],
-    input[type="number"],
-    input[type="date"],
-    input[type="month"],
-    select {
-        width: 100%;
-        padding: 0.8rem 1rem;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
-        background: #f9fafb;
-        font-size: 1rem;
-        transition: all 0.2s;
-    }
-
-    input:focus,
-    select:focus {
-        background: white;
-        border-color: var(--primary-500);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        outline: none;
-    }
-
-    /* Input with Currency Prefix */
-    .input-wrapper {
-        position: relative;
-    }
-
-    .input-wrapper .currency-prefix {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-weight: 600;
+        transition: all var(--transition-normal);
     }
 
-    .input-wrapper input {
-        padding-left: 2.5rem;
+    .step.active .step-number {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
     }
 
-    .input-wrapper.small input {
-        padding: 0.6rem 1rem 0.6rem 2rem;
-        font-size: 0.95rem;
-    }
-
-    .input-wrapper.small .currency-prefix {
-        left: 0.8rem;
-    }
-
-    .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-    }
-
-    .divider {
-        border: 0;
-        border-top: 1px solid #f3f4f6;
-        margin: 2rem 0;
-    }
-
-    /* Category Table */
-    .category-table-container {
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
-        overflow: hidden;
-    }
-
-    .category-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .category-table th {
-        background: #f9fafb;
-        padding: 1rem 1.5rem;
-        text-align: left;
-        font-size: 0.85rem;
-        font-weight: 600;
+    .step-label {
+        font-size: 0.75rem;
         color: var(--text-secondary);
+        font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
-    .category-table td {
-        padding: 1rem 1.5rem;
-        border-top: 1px solid #f3f4f6;
-        vertical-align: middle;
+    .step.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
     }
 
-    .category-table tr:hover td {
-        background: #f9fafb;
+    .current-month-display {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--surface-hover);
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        color: var(--text-primary);
     }
 
-    .category-icon {
-        background: #f3f4f6;
-        width: 36px;
-        height: 36px;
+    /* Form Card */
+    .form-card {
+        background: var(--surface-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-xl);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .budget-month-badge {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .form-subtitle {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
-        font-size: 1.2rem;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
     }
 
-    .btn-lg {
-        padding: 0.8rem 2.5rem;
-        font-size: 1.05rem;
+    /* Form Progress */
+    .form-progress {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        background: var(--surface-hover);
+    }
+
+    .progress-bar {
+        height: 6px;
+        background: var(--border-color);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--primary-gradient);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-align: right;
+        font-weight: 500;
+    }
+
+    /* Form Sections */
+    .form-section {
+        padding: var(--spacing-xl);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .section-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--primary-light);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        font-size: 1.25rem;
+    }
+
+    .section-title-content {
+        flex: 1;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+    }
+
+    .section-subtitle {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .section-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .form-label i {
+        color: var(--primary-color);
+    }
+
+    /* Input Groups */
+    .input-group {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: var(--spacing-md);
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+        z-index: 1;
+    }
+
+    /* Month Selector */
+    .month-selector-wrapper {
+        position: relative;
+    }
+
+    #id_month {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    .month-selector-preview {
+        position: relative;
+        z-index: 2;
+    }
+
+
+    .month-selector-preview {
+        padding: var(--spacing-md);
+        padding-left: calc(var(--spacing-md) * 2 + 1rem);
+        background: var(--surface-hover);
+        border: 2px solid transparent;
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .month-selector-preview:hover {
+        border-color: var(--border-color);
+        background: white;
+    }
+
+    #id_month:focus + .month-selector-preview {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background: white;
+    }
+
+    .month-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .year-text {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* Currency Input */
+    .currency-input {
+        position: relative;
+    }
+
+    .currency-symbol {
+        position: absolute;
+        left: calc(var(--spacing-md) * 2 + 1rem);
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: 600;
+        color: var(--text-primary);
+        z-index: 1;
+    }
+
+    #id_limit_amount {
+        width: 100%;
+        padding: var(--spacing-md);
+        padding-left: calc(var(--spacing-md) * 2 + 2.5rem);
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        background: var(--surface-hover);
+        transition: all var(--transition-fast);
+    }
+
+    #id_limit_amount:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background: white;
+        outline: none;
+    }
+
+    /* Quick Amount Buttons */
+    .quick-amounts {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .quick-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .quick-amount-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .quick-amount-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .quick-amount-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* Form Hints and Errors */
+    .form-hint {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        margin-top: var(--spacing-xs);
+    }
+
+    .form-hint i {
+        color: var(--info-color);
+    }
+
+    .form-error {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--danger-color);
+        margin-top: var(--spacing-xs);
+    }
+
+    .form-error i {
+        color: var(--danger-color);
+    }
+
+    /* Category Filter */
+    .category-filter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .filter-options {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .filter-btn:hover {
+        background: var(--surface-hover);
+    }
+
+    .filter-btn.active {
+        background: var(--primary-light);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .category-search {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        min-width: 200px;
+    }
+
+    .category-search i {
+        color: var(--text-tertiary);
+    }
+
+    #categorySearch {
+        border: none;
+        outline: none;
+        flex: 1;
+        background: transparent;
+    }
+
+    /* Categories Table */
+    .categories-table-container {
+        background: var(--surface-hover);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .categories-table-header {
+        display: flex;
+        background: var(--surface-bg);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .header-column {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .categories-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: var(--spacing-sm);
+    }
+
+    .categories-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .categories-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .categories-list::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 20px;
+    }
+
+    /* Category Items */
+    .category-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md);
+        background: white;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: var(--spacing-sm);
+        transition: all var(--transition-fast);
+    }
+
+    .category-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .category-info {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        gap: var(--spacing-lg);
+    }
+
+    .category-icon-wrapper {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        flex: 1;
+    }
+
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .category-icon.type-income {
+        background: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .category-icon.type-expense {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .category-details {
+        flex: 1;
+    }
+
+    .category-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .category-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge.type-income {
+        background: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .badge.type-expense {
+        background: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .previous-spent {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .category-history {
+        min-width: 120px;
+    }
+
+    .previous-amount {
+        text-align: right;
+    }
+
+    .previous-amount .amount {
+        display: block;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .previous-amount .period {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+    }
+
+    .no-history {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
+    }
+
+    /* Category Limit Input */
+    .category-limit {
+        min-width: 200px;
+    }
+
+    .limit-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .currency-prefix {
+        position: absolute;
+        left: var(--spacing-md);
+        color: var(--text-primary);
+        font-weight: 600;
+        pointer-events: none;
+    }
+
+    .limit-input {
+        width: 100%;
+        padding: var(--spacing-sm);
+        padding-left: calc(var(--spacing-md) * 2);
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        transition: all var(--transition-fast);
+    }
+
+    .limit-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .limit-actions {
+        position: absolute;
+        right: var(--spacing-sm);
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+
+    .limit-action-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: none;
+        background: var(--surface-hover);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-fast);
+    }
+
+    .limit-action-btn:hover {
+        background: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .limit-comparison {
+        margin-top: var(--spacing-xs);
+        font-size: 0.7rem;
+        text-align: right;
+    }
+
+    .comparison.positive {
+        color: var(--success-color);
+    }
+
+    .comparison.negative {
+        color: var(--danger-color);
+    }
+
+    /* Category Summary */
+    .category-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+        background: var(--surface-hover);
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius);
+    }
+
+    .summary-item {
+        text-align: center;
+    }
+
+    .summary-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-xs);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-xl);
+        background: var(--surface-hover);
+    }
+
+    .actions-left, .actions-right {
+        display: flex;
+        gap: var(--spacing-md);
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: 2px solid transparent;
+    }
+
+    .btn-primary {
         background: var(--primary-gradient);
         color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 600;
-        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .btn-danger-outline {
-        padding: 0.75rem 1.5rem;
-        border: 1px solid var(--danger-200);
-        color: var(--danger-600);
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-outline {
         background: white;
-        border-radius: 12px;
-        font-weight: 600;
-        transition: all 0.2s;
+        border-color: var(--border-color);
+        color: var(--text-primary);
     }
 
-    .btn-danger-outline:hover {
-        background: var(--danger-50);
-        border-color: var(--danger-300);
+    .btn-outline:hover {
+        background: var(--surface-hover);
+        border-color: var(--text-tertiary);
+    }
+
+    .btn-danger {
+        background: var(--danger-gradient);
+        color: white;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-sm {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.75rem;
+    }
+
+    .btn-save {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: 1rem;
+        min-width: 180px;
+    }
+
+    /* Preview Sidebar */
+    .preview-sidebar {
+        position: sticky;
+        top: var(--spacing-xl);
+        height: fit-content;
+    }
+
+    .preview-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .preview-title {
+        margin: 0 0 var(--spacing-xs) 0;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .preview-subtitle {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    .preview-content {
+        background: var(--surface-bg);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--shadow-md);
+    }
+
+    .preview-section {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .preview-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .preview-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .preview-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .preview-value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .preview-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .preview-section-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+
+    .preview-count {
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .preview-categories {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .preview-categories::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .preview-categories::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 20px;
+    }
+
+    .preview-category-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .preview-category-item:last-child {
+        border-bottom: none;
+    }
+
+    .preview-category-name {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+    }
+
+    .preview-category-limit {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .empty-preview {
+        text-align: center;
+        padding: var(--spacing-lg);
+        color: var(--text-tertiary);
+    }
+
+    .empty-preview i {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-sm);
+        opacity: 0.5;
+    }
+
+    .empty-preview p {
+        margin: 0;
+        font-size: 0.875rem;
+    }
+
+    /* Preview Summary */
+    .preview-summary {
+        padding: var(--spacing-lg);
+        background: var(--surface-hover);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-row:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .summary-row.total {
+        padding-top: var(--spacing-sm);
+        border-top: 2px solid var(--border-color);
+    }
+
+    .summary-label {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .status-healthy {
+        color: var(--success-color);
+        font-weight: 600;
+    }
+
+    /* Preview Tips */
+    .preview-tips {
+        padding: var(--spacing-lg);
+    }
+
+    .tips-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .tips-header i {
+        color: var(--warning-color);
+    }
+
+    .tips-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+
+    .tips-list {
+        margin: 0;
+        padding-left: var(--spacing-lg);
+    }
+
+    .tips-list li {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xs);
+        font-size: 0.875rem;
+    }
+
+    .tips-list li:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+        background: white;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 400px;
+        box-shadow: var(--shadow-xl);
+        animation: slideUp 0.3s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header i {
+        color: var(--danger-color);
+        font-size: 1.5rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .modal-content {
+        padding: var(--spacing-lg);
+    }
+
+    .modal-content p {
+        margin: 0 0 var(--spacing-md) 0;
+        color: var(--text-secondary);
+    }
+
+    .modal-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .budget-form-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .preview-sidebar {
+            position: static;
+            margin-top: var(--spacing-xl);
+        }
     }
 
     @media (max-width: 768px) {
-        .grid-2 {
-            grid-template-columns: 1fr;
-            gap: 1rem;
+        .budget-form-container {
+            padding: var(--spacing-md);
         }
+        
+        .form-navigation {
+            flex-direction: column;
+            gap: var(--spacing-md);
+            align-items: stretch;
+        }
+        
+        .form-step-indicator {
+            justify-content: center;
+        }
+        
+        .form-header {
+            flex-direction: column;
+            text-align: center;
+            gap: var(--spacing-lg);
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .category-info {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--spacing-md);
+        }
+        
+        .category-history {
+            min-width: auto;
+        }
+        
+        .category-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .actions-left, .actions-right {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .month-selector-preview {
+            padding: var(--spacing-md);
+        }
+    }
 
-        .category-table th,
-        .category-table td {
-            padding: 1rem;
+    @media (max-width: 480px) {
+        .form-title {
+            font-size: 1.5rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .section-actions {
+            align-self: stretch;
+        }
+        
+        .category-filter {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .category-search {
+            min-width: auto;
+        }
+        
+        .btn-sm {
+            padding: var(--spacing-sm);
         }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all components
+        initializeMonthSelector();
+        initializeQuickAmounts();
+        initializeCategoryFilters();
+        initializeCategorySearch();
+        initializeLimitButtons();
+        initializeFormValidation();
+        initializePreviewUpdates();
+        
+        // Calculate initial preview
+        updatePreview();
+    });
+
+    // Month Selector Enhancement
+    function initializeMonthSelector() {
+    const monthInput = document.getElementById('id_month');
+    const monthPreview = document.getElementById('monthPreview');
+    const previewMonth = document.getElementById('previewMonth');
+
+    if (!monthInput || !monthPreview) return;
+
+    // Open month picker when preview is clicked
+    monthPreview.addEventListener('click', () => {
+        monthInput.showPicker?.(); // modern browsers
+        monthInput.focus();
+    });
+
+    // Keyboard accessibility
+    monthPreview.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            monthInput.showPicker?.();
+            monthInput.focus();
+        }
+    });
+
+    // Update preview when month changes
+    monthInput.addEventListener('change', updateMonthPreview);
+
+    function updateMonthPreview() {
+        if (!monthInput.value) return;
+
+        const [year, month] = monthInput.value.split('-');
+        const date = new Date(year, month - 1);
+        const monthName = date.toLocaleString('default', { month: 'long' });
+
+        monthPreview.querySelector('.month-text').textContent = monthName;
+        monthPreview.querySelector('.year-text').textContent = year;
+
+        if (previewMonth) {
+            previewMonth.textContent = `${monthName} ${year}`;
+        }
+    }
+
+    // Initial load
+    updateMonthPreview();
+}
+
+
+    // Quick Amount Buttons
+    function initializeQuickAmounts() {
+        document.querySelectorAll('.quick-amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const amount = this.getAttribute('data-amount');
+                const limitInput = document.getElementById('id_limit_amount');
+                
+                if (limitInput) {
+                    limitInput.value = amount;
+                    limitInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    updatePreview();
+                    
+                    // Add visual feedback
+                    this.style.animation = 'pulse 0.3s ease';
+                    setTimeout(() => {
+                        this.style.animation = '';
+                    }, 300);
+                }
+            });
+        });
+    }
+
+    // Category Filtering
+    function initializeCategoryFilters() {
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const categoryItems = document.querySelectorAll('.category-item');
+        
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                
+                // Filter categories
+                categoryItems.forEach(item => {
+                    const type = item.getAttribute('data-category-type');
+                    
+                    if (filter === 'all' || filter === type) {
+                        item.style.display = 'flex';
+                        setTimeout(() => {
+                            item.style.opacity = '1';
+                            item.style.transform = 'translateX(0)';
+                        }, 10);
+                    } else {
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateX(-20px)';
+                        setTimeout(() => {
+                            item.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+        });
+    }
+
+    // Category Search
+    function initializeCategorySearch() {
+        const searchInput = document.getElementById('categorySearch');
+        const categoryItems = document.querySelectorAll('.category-item');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                
+                categoryItems.forEach(item => {
+                    const name = item.getAttribute('data-category-name');
+                    const matches = name.includes(query);
+                    
+                    if (matches) {
+                        item.style.display = 'flex';
+                        setTimeout(() => {
+                            item.style.opacity = '1';
+                            item.style.transform = 'translateX(0)';
+                        }, 10);
+                    } else {
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateX(-20px)';
+                        setTimeout(() => {
+                            item.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+        }
+    }
+
+    // Category Limit Buttons
+    function initializeLimitButtons() {
+        // Copy last month's spending
+        document.querySelectorAll('.copy-last-month').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = this.closest('.category-item');
+                const previousSpent = item.querySelector('.previous-amount .amount');
+                
+                if (previousSpent) {
+                    const amount = previousSpent.textContent.replace('₹', '').replace(/,/g, '');
+                    const input = item.querySelector('.limit-input');
+                    
+                    input.value = amount;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    updatePreview();
+                    
+                    // Visual feedback
+                    this.style.color = 'var(--success-color)';
+                    setTimeout(() => {
+                        this.style.color = '';
+                    }, 1000);
+                }
+            });
+        });
+        
+        // Clear limit
+        document.querySelectorAll('.clear-limit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.closest('.limit-input-wrapper').querySelector('.limit-input');
+                input.value = '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                updatePreview();
+            });
+        });
+        
+        // Reset all limits
+        document.getElementById('resetCategoryLimits')?.addEventListener('click', function() {
+            document.querySelectorAll('.limit-input').forEach(input => {
+                const defaultValue = input.getAttribute('data-default');
+                input.value = defaultValue || '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            updatePreview();
+        });
+        
+        // Toggle all categories
+        document.getElementById('toggleAllCategories')?.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            const isShowing = icon.classList.contains('fa-eye');
+            
+            icon.className = isShowing ? 'fas fa-eye-slash' : 'fas fa-eye';
+            this.innerHTML = isShowing ? 
+                '<i class="fas fa-eye-slash"></i> Hide All' : 
+                '<i class="fas fa-eye"></i> Show All';
+            
+            const categoryItems = document.querySelectorAll('.category-item');
+            categoryItems.forEach(item => {
+                item.style.display = isShowing ? 'flex' : 'none';
+            });
+        });
+    }
+
+    // Form Validation
+    function initializeFormValidation() {
+        const form = document.getElementById('budgetForm');
+        
+        form.addEventListener('submit', function(e) {
+            const monthInput = document.getElementById('id_month');
+            const limitInput = document.getElementById('id_limit_amount');
+            let isValid = true;
+            
+            // Clear previous errors
+            document.querySelectorAll('.form-error').forEach(err => err.remove());
+            
+            // Validate month
+            if (!monthInput.value) {
+                showError(monthInput, 'Please select a month');
+                isValid = false;
+            }
+            
+            // Validate total limit
+            if (!limitInput.value || parseFloat(limitInput.value) <= 0) {
+                showError(limitInput, 'Please enter a valid total limit');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Scroll to first error
+                const firstError = document.querySelector('.form-error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
+        function showError(input, message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            input.parentNode.parentNode.appendChild(errorDiv);
+            input.style.borderColor = 'var(--danger-color)';
+        }
+    }
+
+    // Preview Updates
+    function initializePreviewUpdates() {
+        // Update preview on any input change
+        document.getElementById('id_month')?.addEventListener('change', updatePreview);
+        document.getElementById('id_limit_amount')?.addEventListener('input', updatePreview);
+        
+        // Update preview on category limit changes
+        document.querySelectorAll('.limit-input').forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+    }
+
+    // Update Preview Function
+    function updatePreview() {
+        // Update month preview
+        const monthInput = document.getElementById('id_month');
+        if (monthInput && monthInput.value) {
+            const date = new Date(monthInput.value + '-01');
+            const month = date.toLocaleString('default', { month: 'long' });
+            const year = date.getFullYear();
+            document.getElementById('previewMonth').textContent = `${month} ${year}`;
+        }
+        
+        // Update total limit preview
+        const totalLimit = parseFloat(document.getElementById('id_limit_amount')?.value || 0);
+        document.getElementById('previewTotalLimit').textContent = `₹${totalLimit.toLocaleString('en-IN')}`;
+        
+        // Calculate category limits
+        let categoriesWithLimit = 0;
+        let totalCategoryLimits = 0;
+        const previewCategories = document.getElementById('previewCategories');
+        const categoryItems = [];
+        
+        document.querySelectorAll('.category-item').forEach(item => {
+            const input = item.querySelector('.limit-input');
+            const limit = parseFloat(input?.value || 0);
+            const categoryName = item.querySelector('.category-name').textContent;
+            
+            if (limit > 0) {
+                categoriesWithLimit++;
+                totalCategoryLimits += limit;
+                categoryItems.push({
+                    name: categoryName,
+                    limit: limit
+                });
+            }
+        });
+        
+        // Update category count
+        document.getElementById('previewCategoryCount').textContent = categoriesWithLimit;
+        document.getElementById('categoriesWithLimit').textContent = categoriesWithLimit;
+        
+        // Update category limits total
+        document.getElementById('totalCategoryLimits').textContent = `₹${totalCategoryLimits.toLocaleString('en-IN')}`;
+        document.getElementById('previewTotalAllocated').textContent = `₹${totalCategoryLimits.toLocaleString('en-IN')}`;
+        
+        // Calculate remaining budget
+        const remaining = totalLimit - totalCategoryLimits;
+        document.getElementById('remainingBudget').textContent = `₹${remaining.toLocaleString('en-IN')}`;
+        document.getElementById('previewRemaining').textContent = `₹${remaining.toLocaleString('en-IN')}`;
+        
+        // Update status
+        let status = 'Healthy';
+        let statusClass = 'status-healthy';
+        
+        if (remaining < 0) {
+            status = 'Over Budget';
+            statusClass = 'status-danger';
+        } else if (remaining < totalLimit * 0.1) {
+            status = 'Low Buffer';
+            statusClass = 'status-warning';
+        }
+        
+        const statusElement = document.getElementById('previewStatus');
+        statusElement.textContent = status;
+        statusElement.className = `summary-value ${statusClass}`;
+        
+        // Update preview categories list
+        if (previewCategories) {
+            if (categoryItems.length > 0) {
+                previewCategories.innerHTML = categoryItems.map(item => `
+                    <div class="preview-category-item">
+                        <span class="preview-category-name">${item.name}</span>
+                        <span class="preview-category-limit">₹${item.limit.toLocaleString('en-IN')}</span>
+                    </div>
+                `).join('');
+            } else {
+                previewCategories.innerHTML = `
+                    <div class="empty-preview">
+                        <i class="fas fa-tags"></i>
+                        <p>No category limits set</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Modal Functions
+    function confirmDeletion() {
+        const modal = document.getElementById('deleteModal');
+        const deleteMonth = document.getElementById('deleteMonth');
+        const monthInput = document.getElementById('id_month');
+        
+        if (monthInput && monthInput.value) {
+            const date = new Date(monthInput.value + '-01');
+            const month = date.toLocaleString('default', { month: 'long' });
+            const year = date.getFullYear();
+            deleteMonth.textContent = `${month} ${year}`;
+        }
+        
+        modal.style.display = 'flex';
+        return false;
+    }
+
+    function closeModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Close modal on outside click
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('deleteModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+</script>
+
+<!-- Add subtract filter if not available -->
+{% if not "subtract" in builtins %}
+{% load mathfilters %}
+{% endif %}
 {% endblock %}
