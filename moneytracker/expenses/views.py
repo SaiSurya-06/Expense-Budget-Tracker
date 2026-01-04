@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .forms import ExpenseForm, IncomeForm, BankAccountForm, CategoryForm
-from .models import Expense, Income, BankAccount, Category
+from .forms import ExpenseForm, IncomeForm, BankAccountForm, CategoryForm, TransferForm
+from .models import Expense, Income, BankAccount, Category, Transfer
 from django.http import JsonResponse
 import json
 
@@ -229,6 +229,7 @@ def edit_account(request, pk):
         'type': 'primary'
     })
 
+
 @login_required
 def delete_account(request, pk):
     account = get_object_or_404(BankAccount, pk=pk, user=request.user)
@@ -250,6 +251,91 @@ def delete_account(request, pk):
         return redirect('manage_accounts')
     
     return render(request, 'expenses/confirm_delete.html', {'object': account, 'type': 'Bank Account'})
+
+@login_required
+def add_transfer(request):
+    if request.method == 'POST':
+        form = TransferForm(request.user, request.POST)
+        if form.is_valid():
+            transfer = form.save(commit=False)
+            transfer.user = request.user
+            
+            # Update balances
+            if transfer.from_account and transfer.to_account:
+                transfer.from_account.balance -= transfer.amount
+                transfer.to_account.balance += transfer.amount
+                transfer.from_account.save()
+                transfer.to_account.save()
+            
+            transfer.save()
+            return redirect('transactions')
+    else:
+        form = TransferForm(request.user)
+    
+    return render(request, 'expenses/add_variable.html', {
+        'form': form,
+        'title': 'Is Self Transfer',
+        'btn_text': 'Transfer',
+        'type': 'primary'
+    })
+
+@login_required
+def edit_transfer(request, pk):
+    transfer = get_object_or_404(Transfer, pk=pk, user=request.user)
+    old_from = transfer.from_account
+    old_to = transfer.to_account
+    old_amount = transfer.amount
+
+    if request.method == 'POST':
+        form = TransferForm(request.user, request.POST, instance=transfer)
+        if form.is_valid():
+            new_transfer = form.save(commit=False)
+            
+            # Revert old balances
+            if old_from:
+                old_from.balance += old_amount
+                old_from.save()
+            if old_to:
+                old_to.balance -= old_amount
+                old_to.save()
+            
+            # Apply new balances
+            if new_transfer.from_account:
+                new_transfer.from_account.balance -= new_transfer.amount
+                new_transfer.from_account.save()
+            if new_transfer.to_account:
+                new_transfer.to_account.balance += new_transfer.amount
+                new_transfer.to_account.save()
+                
+            new_transfer.save()
+            return redirect('transactions')
+    else:
+        form = TransferForm(request.user, instance=transfer)
+    
+    return render(request, 'expenses/add_variable.html', {
+        'form': form,
+        'title': 'Edit Transfer',
+        'btn_text': 'Update Transfer',
+        'type': 'primary'
+    })
+
+@login_required
+def delete_transfer(request, pk):
+    transfer = get_object_or_404(Transfer, pk=pk, user=request.user)
+    if request.method == 'POST':
+        # Revert balances
+        if transfer.from_account:
+            transfer.from_account.balance += transfer.amount
+            transfer.from_account.save()
+        if transfer.to_account:
+            transfer.to_account.balance -= transfer.amount
+            transfer.to_account.save()
+            
+        transfer.delete()
+        return redirect('transactions')
+    
+    return render(request, 'expenses/confirm_delete.html', {'object': transfer, 'type': 'Transfer'})
+
 
 @login_required
 def api_create_category(request):

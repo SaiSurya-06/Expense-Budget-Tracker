@@ -13,7 +13,7 @@
                     <span class="breadcrumb-separator">/</span>
                     <span class="breadcrumb-current">Transactions</span>
                 </div>
-                
+
                 <h1 class="page-title">
                     {% if view_type == 'me' %}
                     <span class="title-gradient">My Transactions</span>
@@ -21,7 +21,7 @@
                     <span class="title-gradient">{{ partner.username }}'s Activity</span>
                     {% endif %}
                 </h1>
-                
+
                 <p class="page-subtitle">
                     {% if view_type == 'me' %}
                     Track every penny, master your wealth
@@ -30,17 +30,19 @@
                     {% endif %}
                 </p>
             </div>
-            
+
             <div class="header-actions">
                 {% if view_type == 'me' %}
                 <div class="action-buttons-group">
-                    <a href="{% url 'add_expense' %}?next=transactions" class="btn btn-icon btn-expense" title="Record Expense">
+                    <a href="{% url 'add_expense' %}?next=transactions" class="btn btn-icon btn-expense"
+                        title="Record Expense">
                         <span class="btn-icon-wrapper">
                             <i class="fas fa-minus-circle"></i>
                         </span>
                         <span class="btn-text">Add Expense</span>
                     </a>
-                    <a href="{% url 'add_income' %}?next=transactions" class="btn btn-icon btn-income" title="Record Income">
+                    <a href="{% url 'add_income' %}?next=transactions" class="btn btn-icon btn-income"
+                        title="Record Income">
                         <span class="btn-icon-wrapper">
                             <i class="fas fa-plus-circle"></i>
                         </span>
@@ -61,7 +63,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Stats Summary Bar -->
         <div class="stats-summary-bar">
             <div class="stat-item">
@@ -142,7 +144,7 @@
                 <span class="results-count">{{ page_obj.paginator.count|default:0 }} transactions found</span>
             </div>
         </div>
-        
+
         <div class="filter-panel-body" id="filterBody">
             <form method="GET" action="" class="filter-form">
                 <div class="filter-grid">
@@ -153,8 +155,8 @@
                             Search
                         </label>
                         <div class="input-with-icon">
-                            <input type="text" name="search" placeholder="Search by description..." 
-                                   value="{{ search_query|default:'' }}" class="filter-input">
+                            <input type="text" name="search" placeholder="Search by description..."
+                                value="{{ search_query|default:'' }}" class="filter-input">
                         </div>
                     </div>
 
@@ -218,13 +220,8 @@
                             <!-- FROM -->
                             <div class="date-field">
                                 <label class="sub-label">From</label>
-                                <input
-                                    type="date"
-                                    name="start_date"
-                                    value="{{ start_date|default:'' }}"
-                                    class="date-input"
-                                    max="{{ end_date|default:'' }}"
-                                >
+                                <input type="date" name="start_date" value="{{ start_date|default:'' }}"
+                                    class="date-input" max="{{ end_date|default:'' }}">
                             </div>
 
                             <div class="date-separator">
@@ -234,13 +231,8 @@
                             <!-- TO -->
                             <div class="date-field">
                                 <label class="sub-label">To</label>
-                                <input
-                                    type="date"
-                                    name="end_date"
-                                    value="{{ end_date|default:'' }}"
-                                    class="date-input"
-                                    min="{{ start_date|default:'' }}"
-                                >
+                                <input type="date" name="end_date" value="{{ end_date|default:'' }}" class="date-input"
+                                    min="{{ start_date|default:'' }}">
                             </div>
                         </div>
                     </div>
@@ -295,7 +287,8 @@
                     </thead>
                     <tbody>
                         {% for t in page_obj %}
-                        <tr class="transaction-row {% if t.type == 'income' %}income-row{% else %}expense-row{% endif %}">
+                        <tr
+                            class="transaction-row {% if t.type == 'income' %}income-row{% elif t.type == 'transfer' %}transfer-row{% else %}expense-row{% endif %}">
                             <td class="cell-date">
                                 <div class="date-cell">
                                     <div class="date-day">{{ t.date|date:"d" }}</div>
@@ -314,9 +307,10 @@
                                 </div>
                             </td>
                             <td class="cell-category">
-                                <span class="category-badge {% if t.type == 'income' %}badge-income{% else %}badge-expense{% endif %}">
-                                    <i class="fas {{ t.category.icon|default:'fa-tag' }}"></i>
-                                    {{ t.category.name|default:"General" }}
+                                <span
+                                    class="category-badge {% if t.type == 'income' %}badge-income{% elif t.type == 'transfer' %}badge-transfer{% else %}badge-expense{% endif %}">
+                                    <i class="fas {{ t.category.icon|default:'fa-exchange-alt' }}"></i>
+                                    {{ t.category.name|default:"Transfer" }}
                                 </span>
                             </td>
                             <td class="cell-account">
@@ -330,12 +324,22 @@
                                         <i class="fas fa-wallet"></i>
                                         {% endif %}
                                     </div>
-                                    <span class="account-name">{{ t.account.name|default:"—" }}</span>
+                                    <span class="account-name">
+                                        {% if t.type == 'transfer' %}
+                                        {{ t.account.name }} <i class="fas fa-arrow-right"
+                                            style="font-size: 0.8em; color: var(--text-tertiary); margin: 0 4px;"></i>
+                                        {{ t.to_account.name }}
+                                        {% else %}
+                                        {{ t.account.name|default:"—" }}
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </td>
                             <td class="cell-amount">
-                                <div class="amount-cell {% if t.type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
-                                    <span class="amount-sign">{% if t.type == 'income' %}+{% else %}−{% endif %}</span>
+                                <div
+                                    class="amount-cell {% if t.type == 'income' %}amount-income{% elif t.type == 'transfer' %}amount-transfer{% else %}amount-expense{% endif %}">
+                                    <span class="amount-sign">{% if t.type == 'income' %}+{% elif t.type == 'transfer'
+                                        %}{% else %}−{% endif %}</span>
                                     <span class="amount-value">₹{{ t.amount|intcomma }}</span>
                                 </div>
                             </td>
@@ -346,14 +350,25 @@
                                     <a href="{% url 'edit_expense' t.id %}" class="action-btn action-edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'delete_expense' t.id %}" class="action-btn action-delete" title="Delete">
+                                    <a href="{% url 'delete_expense' t.id %}" class="action-btn action-delete"
+                                        title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                    {% elif t.type == 'transfer' %}
+                                    <a href="{% url 'edit_transfer' t.id %}" class="action-btn action-edit"
+                                        title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete_transfer' t.id %}" class="action-btn action-delete"
+                                        title="Delete">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                     {% else %}
                                     <a href="{% url 'edit_income' t.id %}" class="action-btn action-edit" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{% url 'delete_income' t.id %}" class="action-btn action-delete" title="Delete">
+                                    <a href="{% url 'delete_income' t.id %}" class="action-btn action-delete"
+                                        title="Delete">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                     {% endif %}
@@ -373,34 +388,43 @@
         <!-- Mobile Card View -->
         <div class="transactions-list-container mobile-view">
             {% for t in page_obj %}
-            <div class="transaction-card {% if t.type == 'income' %}card-income{% else %}card-expense{% endif %}">
+            <div
+                class="transaction-card {% if t.type == 'income' %}card-income{% elif t.type == 'transfer' %}card-transfer{% else %}card-expense{% endif %}">
                 <div class="card-header">
                     <div class="card-date">
                         <span class="date-display">{{ t.date|date:"M d, Y" }}</span>
                     </div>
-                    <div class="card-amount {% if t.type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
-                        {% if t.type == 'income' %}+{% else %}−{% endif %}₹{{ t.amount|intcomma }}
+                    <div
+                        class="card-amount {% if t.type == 'income' %}amount-income{% elif t.type == 'transfer' %}amount-transfer{% else %}amount-expense{% endif %}">
+                        {% if t.type == 'income' %}+{% elif t.type == 'transfer' %}{% else %}−{% endif %}₹{{
+                        t.amount|intcomma }}
                     </div>
                 </div>
-                
+
                 <div class="card-body">
                     <h4 class="card-title">{{ t.description|default:"—" }}</h4>
-                    
+
                     <div class="card-meta">
                         <div class="meta-item">
                             <span class="meta-icon">
                                 <i class="fas fa-tag"></i>
                             </span>
-                            <span class="meta-text">{{ t.category.name|default:"General" }}</span>
+                            <span class="meta-text">{{ t.category.name|default:"Transfer" }}</span>
                         </div>
                         <div class="meta-item">
                             <span class="meta-icon">
                                 <i class="fas fa-wallet"></i>
                             </span>
-                            <span class="meta-text">{{ t.account.name|default:"Cash" }}</span>
+                            <span class="meta-text">
+                                {% if t.type == 'transfer' %}
+                                {{ t.account.name }} &rarr; {{ t.to_account.name }}
+                                {% else %}
+                                {{ t.account.name|default:"Cash" }}
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
-                    
+
                     {% if t.notes %}
                     <div class="card-notes">
                         <i class="fas fa-sticky-note"></i>
@@ -408,7 +432,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 {% if view_type == 'me' %}
                 <div class="card-footer">
                     <div class="card-actions">
@@ -418,6 +442,15 @@
                             Edit
                         </a>
                         <a href="{% url 'delete_expense' t.id %}" class="card-action-btn text-danger">
+                            <i class="fas fa-trash-alt"></i>
+                            Delete
+                        </a>
+                        {% elif t.type == 'transfer' %}
+                        <a href="{% url 'edit_transfer' t.id %}" class="card-action-btn">
+                            <i class="fas fa-edit"></i>
+                            Edit
+                        </a>
+                        <a href="{% url 'delete_transfer' t.id %}" class="card-action-btn text-danger">
                             <i class="fas fa-trash-alt"></i>
                             Delete
                         </a>
@@ -471,7 +504,8 @@
         <div class="pagination-wrapper">
             <div class="pagination-container">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&{{ query_string }}" class="pagination-btn pagination-prev">
+                <a href="?page={{ page_obj.previous_page_number }}&{{ query_string }}"
+                    class="pagination-btn pagination-prev">
                     <i class="fas fa-chevron-left"></i>
                     Previous
                 </a>
@@ -479,12 +513,12 @@
 
                 <div class="pagination-pages">
                     {% for num in page_obj.paginator.page_range %}
-                        {% if num == page_obj.number %}
-                        <span class="page-number current">{{ num }}</span>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <a href="?page={{ num }}&{{ query_string }}" class="page-number">{{ num }}</a>
+                    {% if num == page_obj.number %}
+                    <span class="page-number current">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
+                        href="?page={{ num }}&{{ query_string }}" class="page-number">{{ num }}</a>
                         {% endif %}
-                    {% endfor %}
+                        {% endfor %}
                 </div>
 
                 <div class="pagination-info">
@@ -492,7 +526,8 @@
                 </div>
 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&{{ query_string }}" class="pagination-btn pagination-next">
+                <a href="?page={{ page_obj.next_page_number }}&{{ query_string }}"
+                    class="pagination-btn pagination-next">
                     Next
                     <i class="fas fa-chevron-right"></i>
                 </a>
@@ -932,7 +967,8 @@
         border-top: 1px solid var(--border-color);
     }
 
-    .action-left, .action-right {
+    .action-left,
+    .action-right {
         display: flex;
         gap: var(--spacing-sm);
     }
@@ -1112,6 +1148,11 @@
         color: var(--danger-color);
     }
 
+    .badge-transfer {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+    }
+
     .account-cell {
         display: flex;
         align-items: center;
@@ -1144,6 +1185,11 @@
     .amount-expense {
         color: var(--danger-color);
     }
+
+    .amount-transfer {
+        color: var(--info-color);
+    }
+
 
     .actions-cell {
         display: flex;
@@ -1199,6 +1245,10 @@
 
     .card-expense {
         border-left: 4px solid var(--danger-color);
+    }
+
+    .card-transfer {
+        border-left: 4px solid var(--info-color);
     }
 
     .card-header {
@@ -1388,21 +1438,21 @@
         .layout-container {
             padding: var(--spacing-md);
         }
-        
+
         .page-header-content {
             flex-direction: column;
         }
-        
+
         .stats-summary-bar {
             flex-direction: column;
             gap: var(--spacing-md);
         }
-        
+
         .stat-divider {
             width: 100%;
             height: 1px;
         }
-        
+
         .filter-grid {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -1412,38 +1462,39 @@
         .mobile-view {
             display: block;
         }
-        
+
         .desktop-view {
             display: none;
         }
-        
+
         .filter-grid {
             grid-template-columns: 1fr;
         }
-        
+
         .date-range-inputs {
             flex-direction: column;
             gap: var(--spacing-sm);
         }
-        
+
         .filter-actions {
             flex-direction: column;
             gap: var(--spacing-md);
         }
-        
-        .action-left, .action-right {
+
+        .action-left,
+        .action-right {
             width: 100%;
         }
-        
+
         .btn {
             width: 100%;
             justify-content: center;
         }
-        
+
         .accounts-grid {
             grid-template-columns: 1fr;
         }
-        
+
         .pagination-container {
             flex-direction: column;
             gap: var(--spacing-md);
@@ -1454,15 +1505,15 @@
         .page-title {
             font-size: 2rem;
         }
-        
+
         .section-title {
             font-size: 1.25rem;
         }
-        
+
         .transaction-card {
             padding: var(--spacing-md);
         }
-        
+
         .empty-state-actions {
             flex-direction: column;
         }
@@ -1474,6 +1525,7 @@
             opacity: 0;
             transform: translateY(10px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -1483,6 +1535,7 @@
     .transaction-row {
         animation: fadeIn 0.3s ease-out;
     }
+
     .hidden {
         display: none !important;
     }
@@ -1525,7 +1578,6 @@
         margin-top: 22px;
         color: var(--text-tertiary);
     }
-
 </style>
 
 <script>
@@ -1535,7 +1587,7 @@
         const toggleBtn = document.querySelector('.filter-toggle-btn');
         const toggleIcon = toggleBtn.querySelector('i');
         const toggleText = toggleBtn.querySelector('.toggle-text');
-        
+
         filterBody.classList.toggle('hidden');
         if (filterBody.classList.contains('hidden')) {
             toggleIcon.className = 'fas fa-chevron-down';
@@ -1548,19 +1600,19 @@
 
     // Quick Date Presets
     document.querySelectorAll('.quick-filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const days = parseInt(this.dataset.days);
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(endDate.getDate() - days);
-            
+
             // Format dates as YYYY-MM-DD
             const formatDate = (date) => date.toISOString().split('T')[0];
-            
+
             // Find and set date inputs
             document.querySelector('input[name="start_date"]').value = formatDate(startDate);
             document.querySelector('input[name="end_date"]').value = formatDate(endDate);
-            
+
             // Submit the form
             document.querySelector('.filter-form').submit();
         });
@@ -1568,10 +1620,10 @@
 
     // Date range validation
     document.querySelectorAll('.date-input').forEach(input => {
-        input.addEventListener('change', function() {
+        input.addEventListener('change', function () {
             const startDate = document.querySelector('input[name="start_date"]');
             const endDate = document.querySelector('input[name="end_date"]');
-            
+
             if (startDate.value && endDate.value && startDate.value > endDate.value) {
                 alert('Start date cannot be after end date');
                 this.value = '';
@@ -1580,7 +1632,7 @@
     });
 
     // Initialize animations
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Add staggered animation to transaction rows
         const rows = document.querySelectorAll('.transaction-row, .transaction-card');
         rows.forEach((row, index) => {

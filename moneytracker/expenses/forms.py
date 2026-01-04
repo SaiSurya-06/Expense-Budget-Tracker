@@ -1,10 +1,9 @@
 from django import forms
-from .models import Expense, Income, BankAccount, Category
+from .models import Expense, Income, BankAccount, Category, Transfer
 
 class ExpenseForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['account'].queryset = BankAccount.objects.filter(user=user)
         self.fields['account'].queryset = BankAccount.objects.filter(user=user)
         self.fields['category'].queryset = Category.objects.filter(user=user, type='expense')
 
@@ -58,3 +57,28 @@ class CategoryForm(forms.ModelForm):
             'type': forms.HiddenInput(),
         }
 
+class TransferForm(forms.ModelForm):
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['from_account'].queryset = BankAccount.objects.filter(user=user)
+        self.fields['to_account'].queryset = BankAccount.objects.filter(user=user)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_account = cleaned_data.get('from_account')
+        to_account = cleaned_data.get('to_account')
+
+        if from_account and to_account and from_account == to_account:
+            raise forms.ValidationError("Source and destination accounts cannot be the same.")
+        return cleaned_data
+
+    class Meta:
+        model = Transfer
+        fields = ['amount', 'from_account', 'to_account', 'description', 'date']
+        widgets = {
+             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}),
+             'amount': forms.NumberInput(attrs={'placeholder': '0.00', 'class': 'form-input'}),
+             'from_account': forms.Select(attrs={'class': 'form-input'}),
+             'to_account': forms.Select(attrs={'class': 'form-input'}),
+             'description': forms.TextInput(attrs={'placeholder': 'Transfer details...', 'class': 'form-input'}),
+        }

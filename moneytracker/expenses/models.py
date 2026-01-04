@@ -86,3 +86,16 @@ class BudgetNotification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.budget.id}"
+
+class Transfer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    from_account = models.ForeignKey(BankAccount, related_name='transfers_sent', on_delete=models.CASCADE)
+    to_account = models.ForeignKey(BankAccount, related_name='transfers_received', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True)
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.from_account} -> {self.to_account} ({self.amount})"

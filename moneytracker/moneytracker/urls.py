@@ -7,7 +7,8 @@ from dashboard.views import dashboard_view, dashboard_live_data
 from expenses.views import (
     add_expense, add_income, add_account, add_category,
     edit_expense, delete_expense, edit_income, delete_income,
-    manage_accounts, edit_account, delete_account, api_create_category
+    manage_accounts, edit_account, delete_account, api_create_category,
+    add_transfer, edit_transfer, delete_transfer
 )
 from expenses.views_budget import budget_list, budget_manage, budget_delete
 
@@ -44,6 +45,11 @@ urlpatterns = [
     path('income/edit/<int:pk>/', edit_income, name='edit_income'),
     path('income/delete/<int:pk>/', delete_income, name='delete_income'),
     
+    # Transfer
+    path('transfer/add/', add_transfer, name='add_transfer'),
+    path('transfer/edit/<int:pk>/', edit_transfer, name='edit_transfer'),
+    path('transfer/delete/<int:pk>/', delete_transfer, name='delete_transfer'),
+
     # Accounts
     path('accounts/list/', manage_accounts, name='manage_accounts'),
     path('accounts/add/', add_account, name='add_account'),
