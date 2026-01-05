@@ -163,8 +163,8 @@
                             {% for m in months %}
                                 <option value="{{ m.value }}"
                                     {% if selected_month == m.value %}selected{% endif %}>
-                                    {{ m.label }}
-                                </option>
+                                {{ m.label }}
+                            </option>
                             {% endfor %}
                         </select>
 
@@ -172,8 +172,8 @@
                             {% for y in years %}
                                 <option value="{{ y.value }}"
                                     {% if selected_year == y.value %}selected{% endif %}>
-                                    {{ y.label }}
-                                </option>
+                                {{ y.label }}
+                            </option>
                             {% endfor %}
                         </select>
 
@@ -231,6 +231,253 @@
             </div>
         </div>
     </div>
+
+    <!-- Transaction Calendar Section -->
+    <div class="dashboard-calendar-section animate-fade-in-up stagger-3" style="margin-bottom: 2.5rem;">
+        <div class="dashboard-chart-card" style="padding: 0; overflow: hidden;">
+            <div class="chart-card-header"
+                style="padding: 1.5rem; margin-bottom: 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <div class="chart-card-title-wrapper">
+                    <h3 class="chart-card-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        Transaction Calendar
+                    </h3>
+                    <p class="chart-card-subtitle">Daily Income, Expense & Net Flow</p>
+                </div>
+                <div class="calendar-controls"
+                    style="display: flex; gap: 12px; align-items: center; margin-right: 24px;">
+                    <a href="?month={{ prev_month }}&year={{ prev_year }}" class="cal-nav-btn" title="Previous Month">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+
+                    <form id="calNavForm" method="GET" style="display: flex; gap: 8px; align-items: center; margin: 0;">
+                        <select name="month" onchange="this.form.submit()" class="cal-select-input">
+                            {% for m in months %}
+                            <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>
+                                {{ m.label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <select name="year" onchange="this.form.submit()" class="cal-select-input">
+                            {% for y in years %}
+                            <option value="{{ y.value }}" {% if selected_year == y.value %}selected{% endif %}>
+                                {{ y.label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+
+                    <a href="?month={{ next_month }}&year={{ next_year }}" class="cal-nav-btn" title="Next Month">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+                <div class="calendar-legend">
+                    <span class="legend-item income"><i class="fas fa-circle"></i> Income</span>
+                    <span class="legend-item expense"><i class="fas fa-circle"></i> Expense</span>
+                    <span class="legend-item total"><i class="fas fa-circle"></i> Net</span>
+                </div>
+            </div>
+
+            <div class="calendar-container">
+                <div class="calendar-header-row">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+                <div class="calendar-body">
+                    {% for week in calendar_weeks %}
+                    {% for day_data in week %}
+                    <div class="calendar-day {% if not day_data %}empty{% endif %}">
+                        {% if day_data %}
+                        <div class="day-number">{{ day_data.day }}</div>
+                        {% if day_data.has_data %}
+                        <div class="day-stats">
+                            {% if day_data.income > 0 %}
+                            <div class="stat-row income">+{{ day_data.income|floatformat:0 }}</div>
+                            {% endif %}
+                            {% if day_data.expense > 0 %}
+                            <div class="stat-row expense">-{{ day_data.expense|floatformat:0 }}</div>
+                            {% endif %}
+                            <div class="stat-row total {% if day_data.total < 0 %}neg{% endif %}">
+                                {{ day_data.total|floatformat:0 }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Calendar Component Styles */
+        .calendar-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .calendar-legend .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+        }
+
+        .legend-item.income i {
+            color: #3b82f6;
+        }
+
+        /* Blue like screenshot */
+        .legend-item.expense i {
+            color: #ef4444;
+        }
+
+        /* Red */
+        .legend-item.total i {
+            color: var(--text-primary);
+        }
+
+        .calendar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .calendar-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: rgba(0, 0, 0, 0.03);
+            padding: 12px 0;
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .calendar-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .calendar-day {
+            min-height: 100px;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+
+        .calendar-day:hover {
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1;
+            box-shadow: inset 0 0 0 1px var(--primary-600);
+        }
+
+        .calendar-day.empty {
+            background: rgba(0, 0, 0, 0.01);
+        }
+
+        .day-number {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .calendar-day:hover .day-number {
+            color: var(--primary-600);
+        }
+
+        .day-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: right;
+            margin-top: auto;
+        }
+
+        .stat-row {
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stat-row.income {
+            color: #3b82f6;
+        }
+
+        .stat-row.expense {
+            color: #ef4444;
+        }
+
+        .stat-row.total {
+            color: var(--text-primary);
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.1);
+            font-weight: 800;
+        }
+
+        .stat-row.total.neg {
+            color: #ef4444;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 80px;
+                padding: 4px;
+            }
+
+            .day-number {
+                font-size: 0.85rem;
+                margin-bottom: 2px;
+            }
+
+            .day-stats {
+                font-size: 0.7rem;
+                gap: 1px;
+            }
+
+            .stat-row.total {
+                margin-top: 2px;
+                padding-top: 2px;
+            }
+
+            .calendar-header-row {
+                font-size: 0.8rem;
+                padding: 8px 0;
+            }
+
+            .chart-card-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
 
     <!-- Enhanced Accounts Section with Premium Cards -->
     <div class="dashboard-accounts-section animate-fade-in-up stagger-3">
@@ -1457,42 +1704,15 @@
     const monthSelect = document.getElementById('monthSelect');
     const yearSelect = document.getElementById('yearSelect');
 
-    function fetchCashFlowData() {
+    function updateDashboard() {
         const month = monthSelect.value;
         const year = yearSelect.value;
-
-        const chartCard = document.querySelector('.dashboard-chart-card');
-        chartCard.classList.add('chart-loading');
-
-        fetch(`/dashboard/live-data/?month=${month}&year=${year}`)
-            .then(res => res.json())
-            .then(data => {
-                // Update chart
-                cashFlowChart.data.datasets[0].data = [data.total_income];
-                cashFlowChart.data.datasets[1].data = [data.total_expenses];
-                cashFlowChart.data.labels = [`${month}/${year}`];
-                cashFlowChart.update();
-
-                // Update Net Cash Flow
-                document.querySelector('.summary-value.positive').innerText =
-                    '₹' + data.net_cash_flow.toLocaleString();
-
-                // Update savings rate
-                const rateEl = document.getElementById('savingsRate');
-                if (data.total_income > 0) {
-                    const rate = ((data.total_income - data.total_expenses) / data.total_income * 100).toFixed(1);
-                    rateEl.innerText = rate + '%';
-                } else {
-                    rateEl.innerText = '0%';
-                }
-            })
-            .finally(() => {
-                chartCard.classList.remove('chart-loading');
-            });
+        // Reload page with new query params to update all sections (Calendar, Charts, Stats)
+        window.location.href = `?month=${month}&year=${year}`;
     }
 
-    monthSelect.addEventListener('change', fetchCashFlowData);
-    yearSelect.addEventListener('change', fetchCashFlowData);
+    monthSelect.addEventListener('change', updateDashboard);
+    yearSelect.addEventListener('change', updateDashboard);
 </script>
 
 <script>

@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from calendar import month_name
+import calendar
 
 @login_required
 def dashboard_view(request):
@@ -77,6 +78,63 @@ def dashboard_view(request):
     # Welcome name
     welcome_name = user.first_name or user.username
 
+    # =============================
+    # Calendar Data Logic
+    # =============================
+    cal = calendar.Calendar(firstweekday=6)  # 0=Monday, 6=Sunday
+    month_days_matrix = cal.monthdayscalendar(selected_year, selected_month)
+
+    daily_stats = {}
+
+    for inc in incomes:
+        day = inc.date.day
+        if day not in daily_stats:
+            daily_stats[day] = {'income': 0, 'expense': 0, 'count': 0}
+        daily_stats[day]['income'] += float(inc.amount)
+        daily_stats[day]['count'] += 1
+
+    for exp in expenses:
+        day = exp.date.day
+        if day not in daily_stats:
+            daily_stats[day] = {'income': 0, 'expense': 0, 'count': 0}
+        daily_stats[day]['expense'] += float(exp.amount)
+        daily_stats[day]['count'] += 1
+
+    calendar_weeks = []
+    for week in month_days_matrix:
+        week_data = []
+        for day in week:
+            if day == 0:
+                week_data.append(None)
+            else:
+                stats = daily_stats.get(day, {'income': 0, 'expense': 0})
+                income = stats['income']
+                expense = stats['expense']
+                total = income - expense
+                week_data.append({
+                    'day': day,
+                    'income': income,
+                    'expense': expense,
+                    'total': total,
+                    'has_data': income > 0 or expense > 0
+                })
+        calendar_weeks.append(week_data)
+
+    # ✅ Month Navigation Logic
+    if selected_month == 1:
+        prev_month = 12
+        prev_year = selected_year - 1
+    else:
+        prev_month = selected_month - 1
+        prev_year = selected_year
+
+    if selected_month == 12:
+        next_month = 1
+        next_year = selected_year + 1
+    else:
+        next_month = selected_month + 1
+        next_year = selected_year
+
     return render(request, 'dashboard/dashboard.html', {
         'welcome_name': welcome_name,
 
@@ -91,9 +149,16 @@ def dashboard_view(request):
         'pie_labels': json.dumps(pie_labels),
         'pie_data': json.dumps(pie_data),
 
+        # Calendar
+        'calendar_weeks': calendar_weeks,
+
         # ✅ Needed for UI dropdowns
         'selected_month': selected_month,
         'selected_year': selected_year,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
 
         'months': [
             {'value': i, 'label': month_name[i]}
