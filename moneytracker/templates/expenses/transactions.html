@@ -65,25 +65,53 @@
         </div>
 
         <!-- Stats Summary Bar -->
-        <div class="stats-summary-bar">
-            <div class="stat-item">
-                <div class="stat-label">Total Income</div>
-                <div class="stat-value positive">+₹{{ filtered_total_income|default:0|intcomma }}</div>
+        <!-- Stats Summary Cards -->
+        <div class="stats-grid">
+            <!-- Income Card -->
+            <div class="stat-card income-card">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Income</span>
+                    <h3 class="stat-value">+₹{{ filtered_total_income|default:0|intcomma }}</h3>
+                </div>
+                <div class="stat-indicator">
+                    <i class="fas fa-chart-line"></i>
+                </div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-                <div class="stat-label">Total Expense</div>
-                <div class="stat-value negative">−₹{{ filtered_total_expense|default:0|intcomma }}</div>
+
+            <!-- Expense Card -->
+            <div class="stat-card expense-card">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Expense</span>
+                    <h3 class="stat-value">−₹{{ filtered_total_expense|default:0|intcomma }}</h3>
+                </div>
+                <div class="stat-indicator">
+                    <i class="fas fa-chart-line"></i>
+                </div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-                <div class="stat-label">Net Balance</div>
-                <div class="stat-value {% if filtered_net_total >= 0 %}positive{% else %}negative{% endif %}">
-                    {% if filtered_net_total >= 0 %}
-                    +₹{{ filtered_net_total|default:0|floatformat:2|intcomma }}
-                    {% else %}
-                    −₹{{ filtered_net_total|default:0|floatformat:2|cut:"-"|intcomma }}
-                    {% endif %}
+
+            <!-- Balance Card -->
+            <div class="stat-card balance-card {% if filtered_net_total >= 0 %}positive{% else %}negative{% endif %}">
+                <div class="stat-icon-wrapper">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Net Balance</span>
+                    <h3 class="stat-value">
+                        {% if filtered_net_total >= 0 %}
+                        +₹{{ filtered_net_total|default:0|floatformat:2|intcomma }}
+                        {% else %}
+                        −₹{{ filtered_net_total|default:0|floatformat:2|cut:"-"|intcomma }}
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="stat-indicator">
+                    <i class="fas fa-check-circle"></i>
                 </div>
             </div>
         </div>
@@ -338,8 +366,15 @@
                             <td class="cell-amount">
                                 <div
                                     class="amount-cell {% if t.type == 'income' %}amount-income{% elif t.type == 'transfer' %}amount-transfer{% else %}amount-expense{% endif %}">
-                                    <span class="amount-sign">{% if t.type == 'income' %}+{% elif t.type == 'transfer'
-                                        %}{% else %}−{% endif %}</span>
+                                    <span class="amount-sign">
+                                        {% if t.type == 'income' %}
+                                        +
+                                        {% elif t.type == 'transfer' %}
+
+                                        {% else %}
+                                        −
+                                        {% endif %}
+                                    </span>
                                     <span class="amount-value">₹{{ t.amount|intcomma }}</span>
                                 </div>
                             </td>
@@ -638,47 +673,131 @@
         margin: 0;
     }
 
-    /* Stats Summary Bar */
-    .stats-summary-bar {
+    /* Stats Grid Layout */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stat-card {
+        background: var(--surface-elevated);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
         display: flex;
         align-items: center;
-        background: var(--surface-elevated);
-        border-radius: var(--border-radius-sm);
-        padding: var(--spacing-lg);
+        gap: var(--spacing-md);
         border: 1px solid var(--border-color);
+        transition: all var(--transition-normal);
+        position: relative;
+        overflow: hidden;
     }
 
-    .stat-item {
-        flex: 1;
-        text-align: center;
-        padding: 0 var(--spacing-md);
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+        border-color: transparent;
     }
 
-    .stat-divider {
-        width: 1px;
-        height: 40px;
-        background: var(--border-color);
+    /* Card Specific Styles */
+    .stat-card.income-card:hover {
+        border-color: var(--success-color);
+        background: linear-gradient(to right bottom, #ffffff, #f0fdf4);
     }
 
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin-bottom: var(--spacing-xs);
-        font-weight: 600;
+    .stat-card.expense-card:hover {
+        border-color: var(--danger-color);
+        background: linear-gradient(to right bottom, #ffffff, #fef2f2);
     }
 
-    .stat-value {
-        font-size: 1.75rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
+    .stat-card.balance-card:hover {
+        border-color: var(--info-color);
+        background: linear-gradient(to right bottom, #ffffff, #eff6ff);
     }
 
-    .stat-value.positive {
+    /* Icons */
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .income-card .stat-icon-wrapper {
+        background: rgba(16, 185, 129, 0.1);
         color: var(--success-color);
     }
 
-    .stat-value.negative {
+    .expense-card .stat-icon-wrapper {
+        background: rgba(239, 68, 68, 0.1);
         color: var(--danger-color);
+    }
+
+    .balance-card .stat-icon-wrapper {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+    }
+
+    .balance-card.negative .stat-icon-wrapper {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    /* Content */
+    .stat-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+
+    .income-card .stat-value {
+        color: var(--success-color);
+    }
+
+    .expense-card .stat-value {
+        color: var(--danger-color);
+    }
+
+    .balance-card.positive .stat-value {
+        color: var(--info-color);
+    }
+
+    .balance-card.negative .stat-value {
+        color: var(--danger-color);
+    }
+
+    /* Decorative Indicator */
+    .stat-indicator {
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all var(--transition-normal);
+        color: var(--text-tertiary);
+    }
+
+    .stat-card:hover .stat-indicator {
+        opacity: 0.2;
+        transform: translateX(0);
     }
 
     /* Partner Accounts */
