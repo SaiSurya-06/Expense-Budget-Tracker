@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .error-container {
+        min-height: 60vh;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+    }
+
+    .error-card {
+        width: 100%;
+        max-width: 500px;
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
+        text-align: center;
+    }
+
+    .error-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .error-title {
+        color: #DC2626;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .error-message {
+        color: #4B5563;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        background: #2563EB;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        background: #1E40AF;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="error-container">
+    <div class="error-card">
+        <span class="error-icon">🚫</span>
+        <h2 class="error-title">Cannot Delete Category</h2>
+        <p class="error-message">
+            The category <strong>{{ category.name }}</strong> cannot be deleted because it is being used.
+            <br><br>
+            {% if linked_expenses %}
+            • Linked to Expenses<br>
+            {% endif %}
+            {% if linked_incomes %}
+            • Linked to Income Records<br>
+            {% endif %}
+            {% if linked_budgets %}
+            • Linked to Budget Plans<br>
+            {% endif %}
+            <br>
+            Please reassign these items before deleting the category.
+        </p>
+        <a href="{% url 'manage_categories' %}" class="btn">Go Back</a>
+    </div>
+</div>
+{% endblock %}

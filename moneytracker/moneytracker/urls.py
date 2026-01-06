@@ -8,7 +8,7 @@ from expenses.views import (
     add_expense, add_income, add_account, add_category,
     edit_expense, delete_expense, edit_income, delete_income,
     manage_accounts, edit_account, delete_account, api_create_category,
-    add_transfer, edit_transfer, delete_transfer
+    add_transfer, edit_transfer, delete_transfer, manage_categories, edit_category, delete_category
 )
 from expenses.views_budget import budget_list, budget_manage, budget_delete
 
@@ -39,6 +39,9 @@ urlpatterns = [
     path('expenses/edit/<int:pk>/', edit_expense, name='edit_expense'),
     path('expenses/delete/<int:pk>/', delete_expense, name='delete_expense'),
     path('expenses/category/add/', add_category, name='add_category'),
+    path('expenses/categories/', manage_categories, name='manage_categories'),
+    path('expenses/categories/edit/<int:pk>/', edit_category, name='edit_category'),
+    path('expenses/categories/delete/<int:pk>/', delete_category, name='delete_category'),
     
     # Income
     path('income/add/', add_income, name='add_income'),

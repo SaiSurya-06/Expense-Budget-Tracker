@@ -120,6 +120,42 @@ def dashboard_view(request):
                 })
         calendar_weeks.append(week_data)
 
+    # ✅ Daily Transactions Data for Popup (Grouped by Day)
+    daily_details = {}
+    
+    # Process Incomes
+    for inc in incomes:
+        day = inc.date.day
+        if day not in daily_details:
+             daily_details[day] = []
+        daily_details[day].append({
+            'type': 'income',
+            'description': inc.source or inc.category.name if inc.category else 'Income',
+            'amount': float(inc.amount),
+            'category': inc.category.name if inc.category else 'Uncategorized',
+            'icon': getattr(inc.category, 'icon', 'fa-money-bill-wave') if inc.category else 'fa-money-bill-wave',
+            'account': inc.account.name if inc.account else 'Cash'
+        })
+
+    # Process Expenses
+    for exp in expenses:
+        day = exp.date.day
+        if day not in daily_details:
+             daily_details[day] = []
+        daily_details[day].append({
+            'type': 'expense',
+            'description': exp.description,
+            'amount': float(exp.amount),
+            'category': exp.category.name if exp.category else 'Uncategorized',
+            'icon': getattr(exp.category, 'icon', 'fa-shopping-cart') if exp.category else 'fa-shopping-cart', # Assuming category has icon field or fallback
+            'account': exp.account.name if exp.account else 'Cash'
+        })
+    
+    # Sort transactions within each day (optional, could sort by ID or keep as is) (Actually models are ordered by -date, but here we just append)
+    
+    # Serialize for template
+    daily_transactions_json = json.dumps(daily_details)
+
     # ✅ Month Navigation Logic
     if selected_month == 1:
         prev_month = 12
@@ -151,6 +187,7 @@ def dashboard_view(request):
 
         # Calendar
         'calendar_weeks': calendar_weeks,
+        'daily_transactions_json': daily_transactions_json,
 
         # ✅ Needed for UI dropdowns
         'selected_month': selected_month,

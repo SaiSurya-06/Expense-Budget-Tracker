@@ -161,8 +161,7 @@
                     <div class="cashflow-filter">
                         <select id="monthSelect">
                             {% for m in months %}
-                                <option value="{{ m.value }}"
-                                    {% if selected_month == m.value %}selected{% endif %}>
+                            <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>
                                 {{ m.label }}
                             </option>
                             {% endfor %}
@@ -170,8 +169,7 @@
 
                         <select id="yearSelect">
                             {% for y in years %}
-                                <option value="{{ y.value }}"
-                                    {% if selected_year == y.value %}selected{% endif %}>
+                            <option value="{{ y.value }}" {% if selected_year == y.value %}selected{% endif %}>
                                 {{ y.label }}
                             </option>
                             {% endfor %}
@@ -291,7 +289,7 @@
                 <div class="calendar-body">
                     {% for week in calendar_weeks %}
                     {% for day_data in week %}
-                    <div class="calendar-day {% if not day_data %}empty{% endif %}">
+                    <div class="calendar-day {% if not day_data %}empty{% endif %}" {% if day_data %}onclick="openDayModal({{ day_data.day }})" style="cursor: pointer;" {% endif %}>
                         {% if day_data %}
                         <div class="day-number">{{ day_data.day }}</div>
                         {% if day_data.has_data %}
@@ -1963,5 +1961,195 @@
         }
     `;
     document.head.appendChild(style);
+
+    // ==========================================
+    // Calendar Popup & Slider Logic
+    // ==========================================
+    const startYear = {{ selected_year }};
+    const startMonth = {{ selected_month }};
+
+    // Parse the JSON data passed from view
+    let dailyTransactions = {};
+    try {
+        // Use 'safe' filter to prevent escaping of JSON quotes
+        const rawData = '{{ daily_transactions_json|safe }}';
+        dailyTransactions = JSON.parse(rawData);
+    } catch (e) {
+        console.error("Error parsing transactions JSON", e);
+    }
+
+    let currentOpenDay = null;
+    let maxDaysInMonth = new Date(startYear, startMonth, 0).getDate(); // Get last day of month
+
+    // Function to Open Modal
+    window.openDayModal = function (day) {
+        currentOpenDay = day;
+        renderModalContent(day);
+
+        const overlay = document.getElementById('transactionModal');
+        if (overlay) {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+        }
+    }
+
+    // Function to Close Modal
+    window.closeTransactionModal = function () {
+        const overlay = document.getElementById('transactionModal');
+        if (overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Close on clicking outside
+    const modalOverlay = document.getElementById('transactionModal');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeTransactionModal();
+            }
+        });
+
+        // Touch Swipe Logic
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        modalOverlay.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        modalOverlay.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) slideDay(1); // Swipe Left -> Next
+            if (touchEndX > touchStartX + threshold) slideDay(-1); // Swipe Right -> Prev
+        }
+    }
+
+    // Render Content Function
+    function renderModalContent(day, animationClass = '') {
+        const contentContainer = document.getElementById('modalContent');
+        const listContainer = document.getElementById('transactionList');
+        const emptyState = document.getElementById('modalEmptyState');
+
+        if (!contentContainer) return;
+
+        // Remove old animation classes
+        contentContainer.classList.remove('slide-left-enter', 'slide-right-enter');
+
+        // Trigger reflow to restart animation if needed
+        if (animationClass) {
+            void contentContainer.offsetWidth;
+            contentContainer.classList.add(animationClass);
+        }
+
+        // Update Date Header
+        const dayEl = document.getElementById('modalDay');
+        if (dayEl) dayEl.textContent = day;
+
+        const monthEl = document.getElementById('modalMonth');
+        if (monthEl) {
+            const monthName = new Date(startYear, startMonth - 1).toLocaleString('default', { month: 'long' });
+            monthEl.textContent = `${monthName} ${startYear}`;
+        }
+
+        // Get Data
+        // JSON keys are strings, so access with string key
+        const dayData = dailyTransactions[String(day)] || [];
+
+        // Calculate Totals
+        let inc = 0, exp = 0;
+        dayData.forEach(tx => {
+            if (tx.type === 'income') inc += tx.amount;
+            else exp += tx.amount;
+        });
+
+        const incEl = document.getElementById('modalIncome');
+        if (incEl) incEl.textContent = '+₹' + inc.toLocaleString();
+
+        const expEl = document.getElementById('modalExpense');
+        if (expEl) expEl.textContent = '-₹' + exp.toLocaleString();
+
+        // Render List
+        if (listContainer) {
+            listContainer.innerHTML = '';
+            if (dayData.length === 0) {
+                listContainer.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+            } else {
+                listContainer.style.display = 'flex';
+                if (emptyState) emptyState.style.display = 'none';
+
+                dayData.forEach((tx, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'modal-tx-item';
+                    item.style.animationDelay = (index * 0.05) + 's';
+
+                    const sign = tx.type === 'income' ? '+' : '-';
+                    const colorClass = tx.type;
+
+                    item.innerHTML = `
+                        <div class="tx-icon ${colorClass}">
+                            <i class="fas ${tx.icon || 'fa-circle'}"></i>
+                        </div>
+                        <div class="tx-details">
+                            <div class="tx-description">${tx.description}</div>
+                            <div class="tx-category">${tx.category} • <span class="tx-account">${tx.account}</span></div>
+                        </div>
+                        <div class="tx-amount ${colorClass}">
+                            ${sign}₹${tx.amount.toLocaleString()}
+                        </div>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+        }
+
+        // Update Add Buttons
+        const yearStr = startYear;
+        // Ensure month is 2 digits for YYYY-MM-DD
+        const monthStr = String(startMonth).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+
+        const btnIncome = document.getElementById('btnAddIncome');
+        if (btnIncome) btnIncome.href = `{% url 'add_income' %}?date=${dateStr}`;
+
+        const btnExpense = document.getElementById('btnAddExpense');
+        if (btnExpense) btnExpense.href = `{% url 'add_expense' %}?date=${dateStr}`;
+    }
+
+    // Slider Logic
+    window.slideDay = function (direction) {
+        const oldDay = currentOpenDay;
+        let newDay = currentOpenDay + direction;
+
+        // Bounds Check
+        if (newDay < 1) newDay = maxDaysInMonth; // Loop to end
+        if (newDay > maxDaysInMonth) newDay = 1; // Loop to start
+
+        currentOpenDay = newDay;
+
+        // Determine Animation Direction
+        const animClass = direction > 0 ? 'slide-right-enter' : 'slide-left-enter';
+
+        renderModalContent(newDay, animClass);
+    }
+
+    // Keyboard Navigation
+    document.addEventListener('keydown', function (e) {
+        const modal = document.getElementById('transactionModal');
+        if (!modal || !modal.classList.contains('active')) return;
+
+        if (e.key === 'ArrowLeft') slideDay(-1);
+        if (e.key === 'ArrowRight') slideDay(1);
+        if (e.key === 'Escape') closeTransactionModal();
+    });
 </script>
+{% include 'dashboard/calendar_modal.html' %}
 {% endblock %}

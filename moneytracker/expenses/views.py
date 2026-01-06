@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import ExpenseForm, IncomeForm, BankAccountForm, CategoryForm, TransferForm
-from .models import Expense, Income, BankAccount, Category, Transfer
+from .models import Expense, Income, BankAccount, Category, Transfer, Budget
 from django.http import JsonResponse
 import json
 
@@ -25,7 +25,10 @@ def add_expense(request):
                 return redirect('transactions')
             return redirect('dashboard')
     else:
-        form = ExpenseForm(request.user)
+        initial_data = {}
+        if 'date' in request.GET:
+            initial_data['date'] = request.GET.get('date')
+        form = ExpenseForm(request.user, initial=initial_data)
     
     return render(request, 'expenses/add_variable.html', {
         'form': form,
@@ -56,7 +59,10 @@ def add_income(request):
                 return redirect('transactions')
             return redirect('dashboard')
     else:
-        form = IncomeForm(request.user)
+        initial_data = {}
+        if 'date' in request.GET:
+            initial_data['date'] = request.GET.get('date')
+        form = IncomeForm(request.user, initial=initial_data)
         
     return render(request, 'expenses/add_variable.html', {
         'form': form,
@@ -97,10 +103,14 @@ def add_category(request):
             category = form.save(commit=False)
             category.user = request.user
             # form should include type as hidden input, or we set it here if missing
-            if not category.type:
-                 category.type = category_type
-            category.save()
-            return redirect('add_expense') # Default redirect
+            # Check for duplicates before saving
+            if Category.objects.filter(user=request.user, name__iexact=category.name, type=category_type).exists():
+                form.add_error('name', f'A {category_type} category with this name already exists.')
+            else:
+                 if not category.type:
+                     category.type = category_type
+                 category.save()
+                 return redirect('add_expense') # Default redirect
     else:
         form = CategoryForm(initial={'type': category_type})
     
@@ -357,5 +367,61 @@ def api_create_category(request):
         except Exception as e:
              return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+
+@login_required
+def manage_categories(request):
+    expenses_categories = Category.objects.filter(user=request.user, type='expense')
+    income_categories = Category.objects.filter(user=request.user, type='income')
+    return render(request, 'expenses/manage_categories.html', {
+        'expenses_categories': expenses_categories,
+        'income_categories': income_categories
+    })
+
+@login_required
+def edit_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            # Check for duplicates (excluding current category)
+            name = form.cleaned_data.get('name')
+            if Category.objects.filter(user=request.user, name__iexact=name, type=category.type).exclude(pk=pk).exists():
+                 form.add_error('name', f'A {category.type} category with this name already exists.')
+            else:
+                form.save()
+                return redirect('manage_categories')
+    else:
+        form = CategoryForm(instance=category)
+    
+    return render(request, 'expenses/add_variable.html', {
+        'form': form,
+        'title': f'Edit {category.type.title()} Category',
+        'btn_text': 'Update Category',
+        'type': 'primary'
+    })
+
+@login_required
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    
+    # Check for usage
+    linked_expenses = Expense.objects.filter(category=category).exists()
+    linked_incomes = Income.objects.filter(category=category).exists()
+    linked_budgets = Budget.objects.filter(category=category).exists()
+    
+    if linked_expenses or linked_incomes or linked_budgets:
+        return render(request, 'expenses/delete_category_error.html', {
+            'category': category,
+            'linked_expenses': linked_expenses,
+            'linked_incomes': linked_incomes,
+            'linked_budgets': linked_budgets
+        })
+
+    if request.method == 'POST':
+        category.delete()
+        return redirect('manage_categories')
+    
+    return render(request, 'expenses/confirm_delete.html', {'object': category, 'type': 'Category'})
 
 

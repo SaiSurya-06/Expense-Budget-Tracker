@@ -2,129 +2,206 @@
 {% load static %}
 
 {% block content %}
-<div class="layout-container" style="max-width: 1000px;">
-    <!-- Header -->
-    <div class="d-flex justify-between align-center mb-4 animate-fade-in-up">
-        <div>
-            <h1 class="font-weight-bold" style="font-size: 2rem;">Shared Hub</h1>
-            <p class="text-muted">Manage your financial connections and shared profiles.</p>
+<div class="shared-hub-container">
+    <!-- Header Section -->
+    <div class="hub-header">
+        <div class="header-main">
+            <div class="header-icon">🤝</div>
+            <div class="header-text">
+                <h1>Shared Hub</h1>
+                <p>Manage your financial connections and shared profiles</p>
+            </div>
         </div>
-        <div class="d-flex align-center gap-2">
-            <span class="badge badge-primary px-3 py-2">{{ partners|length }} Active Connections</span>
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-number">{{ partners|length }}</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ pending_requests.count }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
         </div>
     </div>
 
+    <!-- Messages -->
     {% if messages %}
-    {% for message in messages %}
-    <div class="card p-4 mb-4 text-{{ message.tags }} animate-scale-in">
-        {{ message }}
+    <div class="messages-wrapper">
+        {% for message in messages %}
+        <div class="message-alert alert-{{ message.tags }}">
+            <span class="alert-icon">
+                {% if message.tags == 'success' %}✓
+                {% elif message.tags == 'error' %}✕
+                {% else %}ℹ{% endif %}
+            </span>
+            {{ message }}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
     {% endif %}
 
-    <div class="grid-layout animate-fade-in-up stagger-1">
-
-        <!-- Left Column: Invite & Pending -->
-        <div class="d-flex flex-column gap-4">
-
-            <!-- Send Invitation -->
-            <div class="card p-4">
-                <h3 class="mb-4">Invite a Partner</h3>
-                <p class="text-muted text-sm mb-4">Enter a username to send a connection request. Once accepted, you
-                    both share access.</p>
-                <form action="{% url 'send_request' %}" method="POST" class="d-flex gap-2">
+    <!-- Main Content -->
+    <div class="hub-main-grid">
+        <!-- Left Column -->
+        <div class="hub-left-col">
+            <!-- Invite Card -->
+            <div class="section-card invite-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">➕</div>
+                        <h3>Invite Partner</h3>
+                    </div>
+                    <div class="section-subtitle">Send connection request to share access</div>
+                </div>
+                
+                <form action="{% url 'send_request' %}" method="POST" class="invite-form">
                     {% csrf_token %}
-                    <input type="text" name="username" placeholder="Enter username..." required class="form-control"
-                        style="flex: 1;">
-                    <button type="submit" class="btn btn-primary">Send Invite</button>
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <input type="text" name="username" placeholder="Enter username..." required 
+                                   class="form-input">
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            <span>Send Invite</span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </div>
                 </form>
             </div>
 
-            <!-- Incoming Requests -->
-            {% if pending_requests %}
-            <div class="card p-4 border-warning bg-warning-light">
-                <h3 class="mb-4 text-warning">Incoming Requests ({{ pending_requests.count }})</h3>
-                <div class="d-flex flex-column gap-3">
-                    {% for req in pending_requests %}
-                    <div class="request-card d-flex justify-between align-center bg-white p-3 rounded shadow-sm">
-                        <div class="d-flex align-center gap-3">
-                            <div class="avatar-circle">{{ req.sender.username|make_list|first|upper }}</div>
-                            <div>
-                                <div class="font-weight-bold">{{ req.sender.first_name|default:req.sender.username }}
+            <!-- Requests -->
+            <div class="requests-section">
+                {% if pending_requests %}
+                <div class="section-card incoming-requests">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-icon">📨</div>
+                            <h3>Incoming Requests</h3>
+                            <span class="badge">{{ pending_requests.count }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="requests-list">
+                        {% for req in pending_requests %}
+                        <div class="request-card" style="--delay: {{ forloop.counter0 }};">
+                            <div class="request-content">
+                                <div class="user-avatar">
+                                    {{ req.sender.username|make_list|first|upper }}
                                 </div>
-                                <div class="text-muted text-xs">Sent {{ req.created_at|date:"M d" }}</div>
+                                <div class="user-info">
+                                    <div class="user-name">{{ req.sender.first_name|default:req.sender.username }}</div>
+                                    <div class="user-username">@{{ req.sender.username }}</div>
+                                    <div class="request-time">{{ req.created_at|timesince }} ago</div>
+                                </div>
+                            </div>
+                            <div class="request-actions">
+                                <a href="{% url 'respond_request' req.id 'accept' %}" class="btn-accept">
+                                    Accept
+                                </a>
+                                <a href="{% url 'respond_request' req.id 'reject' %}" class="btn-reject">
+                                    Decline
+                                </a>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'respond_request' req.id 'reject' %}"
-                                class="btn btn-sm btn-outline btn-danger py-1 px-3" title="Reject">✕</a>
-                            <a href="{% url 'respond_request' req.id 'accept' %}"
-                                class="btn btn-sm btn-primary py-1 px-3" title="Accept">Accept</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if sent_requests %}
+                <div class="section-card sent-requests">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <div class="section-icon">📤</div>
+                            <h3>Sent Requests</h3>
                         </div>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Sent Requests -->
-            {% if sent_requests %}
-            <div class="card p-4">
-                <h4 class="mb-3 text-muted">Sent Requests</h4>
-                <div class="d-flex flex-column gap-2">
-                    {% for req in sent_requests %}
-                    <div class="d-flex justify-between align-center p-2 border-bottom">
-                        <span class="text-muted">To: <strong>{{ req.receiver.username }}</strong></span>
-                        <span class="badge badge-neutral text-xs">Pending</span>
+                    
+                    <div class="sent-list">
+                        {% for req in sent_requests %}
+                        <div class="sent-item">
+                            <div class="sent-user">
+                                <span class="user-avatar-sm">@</span>
+                                <span class="sent-to">{{ req.receiver.username }}</span>
+                            </div>
+                            <div class="sent-status">
+                                <span class="status-dot"></span>
+                                <span>Pending</span>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
-
         </div>
 
-        <!-- Right Column: Active Connections -->
-        <div class="d-flex flex-column gap-4">
-            <h3 class="mb-0">Your Network</h3>
+        <!-- Right Column -->
+        <div class="hub-right-col">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-icon">👥</div>
+                    <h3>Your Network</h3>
+                </div>
+                <div class="section-subtitle">Connected financial partners</div>
+            </div>
 
             {% if partners %}
-            <div class="connections-grid">
+            <div class="network-grid">
                 {% for partner in partners %}
-                <div class="card p-4 connection-card">
-                    <div class="d-flex justify-between align-start mb-3">
-                        <div class="avatar-large">{{ partner.username|make_list|first|upper }}</div>
-                        <div class="status-indicator active"></div>
+                <div class="partner-card" style="--delay: {{ forloop.counter0 }};">
+                    <div class="partner-header">
+                        <div class="partner-avatar">
+                            {{ partner.username|make_list|first|upper }}
+                        </div>
+                        <div class="partner-status">
+                            <div class="status-indicator"></div>
+                            <span>Connected</span>
+                        </div>
                     </div>
-
-                    <h2 class="mb-1">{{ partner.first_name|default:partner.username }}</h2>
-                    <p class="text-muted text-sm mb-4">Connected</p>
-
-                    <div class="stat-row d-flex justify-between mb-2 text-sm">
-                        <span class="text-muted">Joined</span>
-                        <span class="font-weight-bold">{{ partner.date_joined|date:"M Y" }}</span>
+                    
+                    <div class="partner-info">
+                        <h4>{{ partner.first_name|default:partner.username }}</h4>
+                        <p class="partner-username">@{{ partner.username }}</p>
+                        
+                        <div class="partner-stats">
+                            <div class="stat">
+                                <div class="stat-label">Joined</div>
+                                <div class="stat-value">{{ partner.date_joined|date:"M Y" }}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Member for</div>
+                                <div class="stat-value">{{ partner.date_joined|timesince|truncatewords:2 }}</div>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="mt-4 pt-3 border-top d-flex flex-column gap-2">
-                        <a href="{% url 'partner_transactions' %}?partner_id={{ partner.id }}"
-                            class="btn btn-primary btn-sm w-100">
-                            <i class="fas fa-list-ul"></i> View Activity
+                    
+                    <div class="partner-actions">
+                        <a href="{% url 'partner_transactions' %}?partner_id={{ partner.id }}" 
+                           class="btn-secondary">
+                            View Activity
                         </a>
-                        <form action="{% url 'disconnect_user' partner.id %}" method="POST"
-                            onsubmit="return confirm('Are you sure you want to disconnect?');">
+                        <form action="{% url 'disconnect_user' partner.id %}" method="POST" 
+                              onsubmit="return confirmDisconnect('{{ partner.username }}', this)">
                             {% csrf_token %}
-                            <button type="submit"
-                                class="btn btn-outline btn-sm w-100 text-danger border-danger">Disconnect</button>
+                            <button type="submit" class="btn-danger">
+                                Disconnect
+                            </button>
                         </form>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <div class="card p-6 text-center empty-state">
-                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">👥</div>
-                <h3>No connections yet</h3>
-                <p class="text-muted">Invite a friend or partner to get started.</p>
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <div class="empty-text">
+                    <h4>No connections yet</h4>
+                    <p>Start building your financial network by inviting partners.</p>
+                    <button class="btn-primary" onclick="document.querySelector('.form-input').focus()">
+                        Send Your First Invite
+                    </button>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -132,91 +209,917 @@
 </div>
 
 <style>
-    .grid-layout {
+    /* Modern Color Palette */
+    :root {
+        --primary: #4361ee;
+        --primary-light: #eef2ff;
+        --primary-dark: #3a56d4;
+        --secondary: #7209b7;
+        --success: #2ec4b6;
+        --success-light: #e8f9f7;
+        --warning: #ff9e00;
+        --warning-light: #fff4e6;
+        --danger: #ef476f;
+        --danger-light: #fde8ee;
+        --neutral-50: #f8fafc;
+        --neutral-100: #f1f5f9;
+        --neutral-200: #e2e8f0;
+        --neutral-300: #cbd5e1;
+        --neutral-400: #94a3b8;
+        --neutral-500: #64748b;
+        --neutral-600: #475569;
+        --neutral-700: #334155;
+        --neutral-800: #1e293b;
+        --neutral-900: #0f172a;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Base Styles */
+    .shared-hub-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--neutral-800);
+        background: var(--neutral-50);
+        min-height: 100vh;
+    }
+
+    /* Header */
+    .hub-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding: 24px;
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-200);
+    }
+
+    .header-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        font-size: 40px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .header-text h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--neutral-900);
+        margin: 0 0 4px 0;
+        line-height: 1.2;
+    }
+
+    .header-text p {
+        font-size: 16px;
+        color: var(--neutral-600);
+        margin: 0;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 24px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 16px 24px;
+        background: var(--neutral-50);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--neutral-200);
+        min-width: 120px;
+        transition: var(--transition);
+    }
+
+    .stat-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: var(--neutral-600);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+
+    /* Messages */
+    .messages-wrapper {
+        margin-bottom: 24px;
+    }
+
+    .message-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert-success {
+        background: var(--success-light);
+        color: #059669;
+        border: 1px solid #10b981;
+    }
+
+    .alert-error {
+        background: var(--danger-light);
+        color: #dc2626;
+        border: 1px solid #ef4444;
+    }
+
+    .alert-info {
+        background: var(--primary-light);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+
+    .alert-icon {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    /* Main Grid */
+    .hub-main-grid {
         display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 2rem;
+        grid-template-columns: 400px 1fr;
+        gap: 32px;
     }
 
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .grid-layout {
-            grid-template-columns: 1fr;
-        }
+    /* Section Cards */
+    .section-card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-200);
+        margin-bottom: 24px;
+        transition: var(--transition);
     }
 
-    .avatar-circle {
-        width: 40px;
-        height: 40px;
-        background: var(--primary-100);
-        color: var(--primary-600);
-        border-radius: 50%;
+    .section-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .section-icon {
+        font-size: 24px;
+    }
+
+    .section-title h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin: 0;
+    }
+
+    .badge {
+        background: var(--warning);
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 12px;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .section-subtitle {
+        font-size: 14px;
+        color: var(--neutral-600);
+        margin: 0;
+    }
+
+    /* Invite Form */
+    .invite-form .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-prefix {
+        position: absolute;
+        left: 16px;
+        color: var(--neutral-500);
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 14px 16px 14px 36px;
+        border: 2px solid var(--neutral-300);
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    /* Buttons */
+    .btn-primary {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        gap: 8px;
+        width: 100%;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
     }
 
-    .avatar-large {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-icon {
+        font-size: 18px;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-primary:hover .btn-icon {
+        transform: translateX(4px);
+    }
+
+    /* Request Cards */
+    .request-card {
+        background: white;
+        border: 1px solid var(--neutral-200);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: fadeInUp 0.4s ease forwards;
+        animation-delay: calc(var(--delay) * 0.1s);
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    .request-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-md);
+    }
+
+    .request-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
         color: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        font-size: 18px;
+        font-weight: 600;
+        flex-shrink: 0;
     }
 
-    .connections-grid {
+    .user-avatar-sm {
+        width: 32px;
+        height: 32px;
+        background: var(--neutral-200);
+        color: var(--neutral-600);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+
+    .user-info {
+        flex: 1;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin-bottom: 2px;
+    }
+
+    .user-username, .request-time {
+        font-size: 13px;
+        color: var(--neutral-500);
+    }
+
+    .request-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .btn-accept, .btn-reject {
+        padding: 8px 16px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .btn-accept {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-reject {
+        background: var(--neutral-200);
+        color: var(--neutral-700);
+    }
+
+    .btn-accept:hover, .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Sent Requests */
+    .sent-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--neutral-200);
+    }
+
+    .sent-item:last-child {
+        border-bottom: none;
+    }
+
+    .sent-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sent-to {
+        font-weight: 500;
+        color: var(--neutral-800);
+    }
+
+    .sent-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--neutral-500);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--warning);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    /* Network Grid */
+    .hub-right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .network-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
     }
 
-    .connection-card {
-        transition: transform 0.2s, box-shadow 0.2s;
+    /* Partner Card */
+    .partner-card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-200);
+        transition: var(--transition);
+        animation: fadeInUp 0.4s ease forwards;
+        animation-delay: calc(var(--delay) * 0.1s);
+        opacity: 0;
+        transform: translateY(10px);
     }
 
-    .connection-card:hover {
+    .partner-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+    }
+
+    .partner-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .partner-avatar {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 600;
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.2);
+    }
+
+    .partner-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--success);
+        font-weight: 500;
     }
 
     .status-indicator {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
+        background: var(--success);
         border-radius: 50%;
-        background-color: var(--success-600);
-        box-shadow: 0 0 0 4px var(--success-100);
+        position: relative;
     }
 
-    .bg-warning-light {
-        background-color: #FEFCE8;
+    .status-indicator::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        background: var(--success);
+        border-radius: 50%;
+        opacity: 0.2;
+        animation: pulse 2s infinite;
     }
 
-    .border-warning {
-        border-color: #FEF9C3;
+    .partner-info h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin: 0 0 4px 0;
     }
 
-    .btn-sm {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
+    .partner-username {
+        font-size: 14px;
+        color: var(--neutral-500);
+        margin: 0 0 20px 0;
     }
 
-    .w-100 {
-        width: 100%;
+    .partner-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
     }
 
-    .border-top {
-        border-top: 1px solid var(--border);
+    .stat {
+        background: var(--neutral-50);
+        padding: 12px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--neutral-200);
     }
 
-    .text-xs {
-        font-size: 0.75rem;
+    .stat-label {
+        font-size: 12px;
+        color: var(--neutral-500);
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--neutral-800);
+    }
+
+    .partner-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-secondary, .btn-danger {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: var(--neutral-100);
+        color: var(--neutral-700);
+        border: 1px solid var(--neutral-300);
+    }
+
+    .btn-danger {
+        background: var(--danger-light);
+        color: var(--danger);
+        border: 1px solid var(--danger);
+    }
+
+    .btn-secondary:hover, .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 64px 32px;
+        text-align: center;
+        box-shadow: var(--shadow-md);
+        border: 2px dashed var(--neutral-300);
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 24px;
+        opacity: 0.3;
+    }
+
+    .empty-text h4 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--neutral-900);
+        margin: 0 0 8px 0;
+    }
+
+    .empty-text p {
+        font-size: 15px;
+        color: var(--neutral-600);
+        margin: 0 0 24px 0;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .hub-main-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        .hub-left-col {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .shared-hub-container {
+            padding: 16px;
+        }
+
+        .hub-header {
+            flex-direction: column;
+            gap: 24px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header-main {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .header-stats {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .stat-item {
+            min-width: 100px;
+            padding: 12px 16px;
+        }
+
+        .network-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .partner-actions {
+            flex-direction: column;
+        }
+
+        .request-card {
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .request-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .request-actions {
+            width: 100%;
+        }
+
+        .btn-accept, .btn-reject {
+            flex: 1;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-stats {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-item {
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .partner-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .section-card {
+            padding: 20px;
+        }
+
+        .invite-form .form-group {
+            gap: 12px;
+        }
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss messages
+        setTimeout(() => {
+            document.querySelectorAll('.message-alert').forEach(alert => {
+                alert.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Focus effect on input
+        const inviteInput = document.querySelector('.form-input');
+        if (inviteInput) {
+            inviteInput.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            inviteInput.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        }
+
+        // Hover effects for cards
+        document.querySelectorAll('.partner-card').forEach(card => {
+            const avatar = card.querySelector('.partner-avatar');
+            if (avatar) {
+                card.addEventListener('mouseenter', () => {
+                    avatar.style.transform = 'scale(1.1) rotate(5deg)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    avatar.style.transform = 'scale(1) rotate(0deg)';
+                });
+            }
+        });
+
+        // Mobile invite button focus
+        const emptyBtn = document.querySelector('.empty-state .btn-primary');
+        if (emptyBtn) {
+            emptyBtn.addEventListener('click', function() {
+                inviteInput.focus();
+                inviteInput.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+    });
+
+    function confirmDisconnect(username, form) {
+        event.preventDefault();
+        
+        const modal = document.createElement('div');
+        modal.className = 'confirmation-modal';
+        modal.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-icon">⚠️</div>
+                    <h4>Disconnect from @${username}?</h4>
+                    <p>You'll lose access to shared financial data. This action cannot be undone.</p>
+                    <div class="modal-actions">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-confirm">Yes, Disconnect</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+        
+        // Add modal styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .confirmation-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 9999;
+            }
+            .modal-overlay {
+                background: rgba(15, 23, 42, 0.5);
+                backdrop-filter: blur(4px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                padding: 20px;
+                animation: fadeIn 0.2s ease;
+            }
+            .modal-content {
+                background: white;
+                padding: 32px;
+                border-radius: 20px;
+                max-width: 400px;
+                width: 100%;
+                text-align: center;
+                animation: scaleIn 0.2s ease;
+                box-shadow: var(--shadow-xl);
+            }
+            .modal-icon {
+                font-size: 48px;
+                margin-bottom: 16px;
+                color: var(--warning);
+            }
+            .modal-content h4 {
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--neutral-900);
+                margin: 0 0 12px 0;
+            }
+            .modal-content p {
+                font-size: 14px;
+                color: var(--neutral-600);
+                margin: 0 0 24px 0;
+                line-height: 1.5;
+            }
+            .modal-actions {
+                display: flex;
+                gap: 12px;
+            }
+            .btn-cancel, .btn-confirm {
+                flex: 1;
+                padding: 12px 20px;
+                border: none;
+                border-radius: var(--radius-md);
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: var(--transition);
+            }
+            .btn-cancel {
+                background: var(--neutral-100);
+                color: var(--neutral-700);
+                border: 1px solid var(--neutral-300);
+            }
+            .btn-confirm {
+                background: var(--danger);
+                color: white;
+            }
+            .btn-cancel:hover, .btn-confirm:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-md);
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes scaleIn {
+                from { opacity: 0; transform: scale(0.9); }
+                to { opacity: 1; transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Handle actions
+        modal.querySelector('.btn-cancel').addEventListener('click', () => {
+            document.body.removeChild(modal);
+            document.body.style.overflow = '';
+            document.head.removeChild(style);
+        });
+        
+        modal.querySelector('.btn-confirm').addEventListener('click', () => {
+            form.submit();
+        });
+        
+        return false;
+    }
+</script>
 {% endblock %}
