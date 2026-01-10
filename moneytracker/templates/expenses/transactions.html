@@ -431,8 +431,7 @@
                     </div>
                     <div
                         class="card-amount {% if t.type == 'income' %}amount-income{% elif t.type == 'transfer' %}amount-transfer{% else %}amount-expense{% endif %}">
-                        {% if t.type == 'income' %}+{% elif t.type == 'transfer' %}{% else %}−{% endif %}₹{{
-                        t.amount|intcomma }}
+                        {% if t.type == 'income' %}+{% elif t.type == 'transfer' %}{% else %}−{% endif %}₹{{ t.amount|intcomma }}
                     </div>
                 </div>
 
