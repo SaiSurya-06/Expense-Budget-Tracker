@@ -11,9 +11,9 @@ from django.core.paginator import Paginator
 
 def get_transactions_for_user(user, account_id=None, category_id=None, transaction_type=None, search_query=None, start_date=None, end_date=None):
     # Base queries (using select_related to avoid N+1 queries)
-    expense_qs = Expense.objects.filter(user=user).select_related('category', 'account').order_by('-date')
-    income_qs = Income.objects.filter(user=user).select_related('category', 'account').order_by('-date')
-    transfer_qs = Transfer.objects.filter(user=user).select_related('from_account', 'to_account').order_by('-date')
+    expense_qs = Expense.objects.filter(user=user).select_related('category', 'account').order_by('-date', '-id')
+    income_qs = Income.objects.filter(user=user).select_related('category', 'account').order_by('-date', '-id')
+    transfer_qs = Transfer.objects.filter(user=user).select_related('from_account', 'to_account').order_by('-date', '-id')
 
     # Apply Filters
     if account_id:
@@ -86,7 +86,7 @@ def get_transactions_for_user(user, account_id=None, category_id=None, transacti
                 'to_account': t.to_account
             })
     
-    transactions.sort(key=lambda x: x['date'], reverse=True)
+    transactions.sort(key=lambda x: (x['date'], x['id']), reverse=True)
     return transactions
 
 @login_required

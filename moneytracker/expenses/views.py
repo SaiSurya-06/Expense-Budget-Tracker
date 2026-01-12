@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db import transaction
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import ExpenseForm, IncomeForm, BankAccountForm, CategoryForm, TransferForm
 from .models import Expense, Income, BankAccount, Category, Transfer, Budget
@@ -425,3 +427,94 @@ def delete_category(request, pk):
     return render(request, 'expenses/confirm_delete.html', {'object': category, 'type': 'Category'})
 
 
+@login_required
+def add_bulk_transactions(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            transactions_list = data.get('transactions', [])
+            
+            if not transactions_list:
+                return JsonResponse({'success': False, 'error': 'No transactions provided'})
+
+            saved_count = 0
+            errors = []
+
+            # Atomic block: All or nothing
+            with transaction.atomic():
+                # First pass: Validate all
+                # To really do "atomic", we can just iterate and save. 
+                # If any error, we raise an Exception or set_rollback inside the block.
+                
+                for index, item in enumerate(transactions_list):
+                    t_type = item.get('type')
+                    row_num = index + 1
+                    
+                    # Normalize data for Forms
+                    form_data = {
+                        'amount': item.get('amount'),
+                        'date': item.get('date'),
+                        'category': item.get('category_id'),
+                        'account': item.get('account_id'),
+                    }
+                    
+                    form = None
+                    if t_type == 'expense':
+                        form_data['description'] = item.get('description')
+                        form = ExpenseForm(request.user, form_data)
+                    elif t_type == 'income':
+                        form_data['source'] = item.get('description') # Front-end sends 'description' for both
+                        form = IncomeForm(request.user, form_data)
+                    else:
+                        errors.append(f"Row {row_num}: Invalid type '{t_type}'")
+                        continue
+
+                    if form.is_valid():
+                        obj = form.save(commit=False)
+                        obj.user = request.user
+                        
+                        # Handle Balance Update
+                        if obj.account:
+                            if t_type == 'expense':
+                                obj.account.balance -= obj.amount
+                            elif t_type == 'income':
+                                obj.account.balance += obj.amount
+                            obj.account.save()
+                        
+                        obj.save()
+                        saved_count += 1
+                    else:
+                        # Format errors
+                        field_errors = []
+                        for field, err_list in form.errors.items():
+                            field_errors.append(f"{field}: {err_list[0]}")
+                        errors.append(f"Row {row_num}: " + ", ".join(field_errors))
+                
+                if errors:
+                    # Rollback everything if there are errors
+                    transaction.set_rollback(True)
+                    return JsonResponse({'success': False, 'error': 'Validation Failed', 'details': errors})
+            
+            messages.success(request, f"Successfully added {saved_count} transactions.")
+            return JsonResponse({'success': True, 'count': saved_count})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    else:
+        # GET: Render the bulk add page
+        categories_expense = Category.objects.filter(user=request.user, type='expense')
+        categories_income = Category.objects.filter(user=request.user, type='income')
+        accounts = BankAccount.objects.filter(user=request.user)
+        
+        # Serialize for JS
+        # We need IDs and Names
+        cat_exp_list = [{'id': c.id, 'name': c.name} for c in categories_expense]
+        cat_inc_list = [{'id': c.id, 'name': c.name} for c in categories_income]
+        acc_list = [{'id': a.id, 'name': a.name} for a in accounts]
+
+        return render(request, 'expenses/add_bulk.html', {
+            'categories_expense_json': json.dumps(cat_exp_list),
+            'categories_income_json': json.dumps(cat_inc_list),
+            'accounts_json': json.dumps(acc_list),
+        })
